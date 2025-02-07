@@ -1,0 +1,6 @@
+Added Pin To Net: NetName=+3.3V Pin=U3-1
+Added Pin To Net: NetName=CLK Pin=U3-7
+Added Pin To Net: NetName=DIN Pin=U3-11
+Added Pin To Net: NetName=DC Pin=U3-12
+Added Pin To Net: NetName=CE Pin=U3-13
+Added Pin To Net: NetName=RST Pin=U3-14

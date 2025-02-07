@@ -1,0 +1,78 @@
+Added Component: Designator=C1(CAPR51-254-508X318X736)
+Added Component: Designator=C2(CAPR51-254-508X318X736)
+Added Component: Designator=C3(FP-RAD-TH-D_16_0_5-L_25_2-MFG)
+Added Component: Designator=D1(DIOD-DO-41-P-2_V)
+Added Component: Designator=D2(DIOD-DO-41-P-2_V)
+Added Component: Designator=D3(DIOD-DO-41-P-2_V)
+Added Component: Designator=J1(FP-22-29-2081-MFG)
+Added Component: Designator=P1(MOLX-22-27-2021_V)
+Added Component: Designator=P2(MOLX-22-27-2021_V)
+Added Component: Designator=P3(MOLX-22-27-2041_V)
+Added Component: Designator=P4(MOLX-22-27-2021_V)
+Added Component: Designator=P5(MOLX-22-27-2041_V)
+Added Component: Designator=P6(MOLX-22-27-2041_V)
+Added Component: Designator=Q1(FP-135AR-MFG)
+Added Component: Designator=Q2(FP-135AR-MFG)
+Added Component: Designator=R1(FP-MRS25-MFG)
+Added Component: Designator=R2(FP-MRS25-MFG)
+Added Component: Designator=R3(FP-MRS25-MFG)
+Added Component: Designator=R4(FP-MRS25-MFG)
+Added Component: Designator=U1(FP-TO220B03-MFG)
+Added Component: Designator=U2(FAIR-TO-220-3)
+Add Pin To Net: Unknown Pin: Pin C1-1
+Add Pin To Net: Unknown Pin: Pin C1-2
+Add Pin To Net: Unknown Pin: Pin C2-1
+Add Pin To Net: Unknown Pin: Pin C2-2
+Add Pin To Net: Unknown Pin: Pin C3-1
+Add Pin To Net: Unknown Pin: Pin C3-2
+Add Pin To Net: Unknown Pin: Pin D1-1
+Add Pin To Net: Unknown Pin: Pin D1-2
+Add Pin To Net: Unknown Pin: Pin D2-1
+Add Pin To Net: Unknown Pin: Pin D2-2
+Add Pin To Net: Unknown Pin: Pin D3-1
+Add Pin To Net: Unknown Pin: Pin D3-2
+Add Pin To Net: Unknown Pin: Pin J1-1
+Add Pin To Net: Unknown Pin: Pin J1-2
+Add Pin To Net: Unknown Pin: Pin J1-3
+Add Pin To Net: Unknown Pin: Pin J1-4
+Add Pin To Net: Unknown Pin: Pin J1-5
+Add Pin To Net: Unknown Pin: Pin J1-6
+Add Pin To Net: Unknown Pin: Pin J1-7
+Add Pin To Net: Unknown Pin: Pin J1-8
+Add Pin To Net: Unknown Pin: Pin P1-1
+Add Pin To Net: Unknown Pin: Pin P1-2
+Add Pin To Net: Unknown Pin: Pin P2-1
+Add Pin To Net: Unknown Pin: Pin P2-2
+Add Pin To Net: Unknown Pin: Pin P3-1
+Add Pin To Net: Unknown Pin: Pin P3-2
+Add Pin To Net: Unknown Pin: Pin P3-3
+Add Pin To Net: Unknown Pin: Pin P3-4
+Add Pin To Net: Unknown Pin: Pin P4-1
+Add Pin To Net: Unknown Pin: Pin P4-2
+Add Pin To Net: Unknown Pin: Pin P5-1
+Add Pin To Net: Unknown Pin: Pin P5-2
+Add Pin To Net: Unknown Pin: Pin P5-3
+Add Pin To Net: Unknown Pin: Pin P5-4
+Add Pin To Net: Unknown Pin: Pin P6-1
+Add Pin To Net: Unknown Pin: Pin P6-2
+Add Pin To Net: Unknown Pin: Pin P6-3
+Add Pin To Net: Unknown Pin: Pin P6-4
+Add Pin To Net: Unknown Pin: Pin Q1-1
+Add Pin To Net: Unknown Pin: Pin Q1-2
+Add Pin To Net: Unknown Pin: Pin Q1-3
+Add Pin To Net: Unknown Pin: Pin Q2-1
+Add Pin To Net: Unknown Pin: Pin Q2-2
+Add Pin To Net: Unknown Pin: Pin Q2-3
+Add Pin To Net: Unknown Pin: Pin R1-1
+Add Pin To Net: Unknown Pin: Pin R1-2
+Add Pin To Net: Unknown Pin: Pin R2-1
+Add Pin To Net: Unknown Pin: Pin R2-2
+Add Pin To Net: Unknown Pin: Pin R3-1
+Add Pin To Net: Unknown Pin: Pin R3-2
+Add Pin To Net: Unknown Pin: Pin R4-1
+Add Pin To Net: Unknown Pin: Pin R4-2
+Add Pin To Net: Unknown Pin: Pin U1-1
+Add Pin To Net: Unknown Pin: Pin U1-3
+Add Pin To Net: Unknown Pin: Pin U2-1
+Add Pin To Net: Unknown Pin: Pin U2-2
+Add Pin To Net: Unknown Pin: Pin U2-3

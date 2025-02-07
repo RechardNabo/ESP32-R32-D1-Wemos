@@ -1,0 +1,4 @@
+Removed Pin From Net: NetName=Fan Switch (Control) Pin=U3-23
+Removed Pin From Net: NetName=Water Pump (Control) Pin=U3-24
+Added Pin To Net: NetName=Water Pump (Control) Pin=U3-23
+Added Pin To Net: NetName=Fan Switch (Control) Pin=U3-24
