@@ -1,0 +1,276 @@
+<!DOCTYPE HTML><html>
+<!-- Rui Santos - Complete project details at https://RandomNerdTutorials.com
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software. -->
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #fff;
+      min-width: 310px;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      text-align: center;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+    }
+    h2 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      margin: 10px 0;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+    }
+    .button {
+      background: #f1c40f;
+      border: none;
+      color: #121212;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .button:hover {
+      background: #d4ac0d;
+    }
+  </style>
+</head>
+<body>
+  <h2>ESP Weather Station</h2>
+  <div id="chart-temperature" class="container"></div>
+  <div id="chart-humidity" class="container"></div>
+  <div id="chart-pressure" class="container"></div>
+  <div id="chart-all" class="container"></div>
+</body>
+<script>
+
+var chartT = new Highcharts.Chart({
+  chart:{ renderTo : 'chart-temperature' },
+  title: { text: 'BME280 Temperature' },
+  series: [{
+    showInLegend: true,
+    data: []
+  }],
+  plotOptions: {
+    line: { animation: true,
+      dataLabels: { enabled: true }
+    },
+    series: { color: '#059e8a' }
+  },
+  xAxis: { type: 'datetime',
+    dateTimeLabelFormats: { second: '%H:%M:%S' }
+  },
+  yAxis: {
+    title: { text: 'Temperature (Celsius)' }
+  },
+  credits: { enabled: true }
+});
+setInterval(function ( ) {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var x = (new Date()).getTime(),
+          y = parseFloat(this.responseText);
+      //console.log(this.responseText);
+      if(chartT.series[0].data.length > 40) {
+        chartT.series[0].addPoint([x, y], true, true, true);
+      } else {
+        chartT.series[0].addPoint([x, y], true, false, true);
+      }
+    }
+  };
+  xhttp.open("GET", "/temperature", true);
+  xhttp.send();
+}, 1000 ) ;
+
+var chartH = new Highcharts.Chart({
+  chart:{ renderTo:'chart-humidity' },
+  title: { text: 'BME280 Humidity' },
+  series: [{
+    showInLegend: true,
+    data: []
+  }],
+  plotOptions: {
+    line: { animation: true,
+      dataLabels: { enabled: true }
+    }
+  },
+  xAxis: {
+    type: 'datetime',
+    dateTimeLabelFormats: { second: '%H:%M:%S' }
+  },
+  yAxis: {
+    title: { text: 'Humidity (%)' }
+  },
+  credits: { enabled: true }
+});
+setInterval(function ( ) {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var x = (new Date()).getTime(),
+          y = parseFloat(this.responseText);
+      //console.log(this.responseText);
+      if(chartH.series[0].data.length > 40) {
+        chartH.series[0].addPoint([x, y], true, true, true);
+      } else {
+        chartH.series[0].addPoint([x, y], true, false, true);
+      }
+    }
+  };
+  xhttp.open("GET", "/humidity", true);
+  xhttp.send();
+}, 1000 ) ;
+
+var chartP = new Highcharts.Chart({
+  chart:{ renderTo:'chart-pressure' },
+  title: { text: 'BME280 Pressure' },
+  series: [{
+    showInLegend: true,
+    data: []
+  }],
+  plotOptions: {
+    line: { animation: true,
+      dataLabels: { enabled: true }
+    },
+    series: { color: '#18009c' }
+  },
+  xAxis: {
+    type: 'datetime',
+    dateTimeLabelFormats: { second: '%H:%M:%S' }
+  },
+  yAxis: {
+    title: { text: 'Pressure (hPa)' }
+  },
+  credits: { enabled: true }
+});
+setInterval(function ( ) {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var x = (new Date()).getTime(),
+          y = parseFloat(this.responseText);
+      //console.log(this.responseText);
+      if(chartP.series[0].data.length > 40) {
+        chartP.series[0].addPoint([x, y], true, true, true);
+      } else {
+        chartP.series[0].addPoint([x, y], true, false, true);
+      }
+    }
+  };
+  xhttp.open("GET", "/pressure", true);
+  xhttp.send();
+}, 1000 ) ;
+
+var chartAll = new Highcharts.Chart({
+  chart: { renderTo: 'chart-all' },
+  title: { text: 'BME280 All Data' },
+  series: [
+    { name: 'Temperature', data: [], color: '#059e8a' },
+    { name: 'Humidity', data: [], color: '#1e90ff' },
+    { name: 'Pressure', data: [], color: '#18009c' }
+  ],
+  plotOptions: {
+    line: { animation: true, dataLabels: { enabled: true } }
+  },
+  xAxis: { type: 'datetime', dateTimeLabelFormats: { second: '%H:%M:%S' } },
+  yAxis: { title: { text: 'Values' } },
+  credits: { enabled: true }
+});
+
+setInterval(function () {
+  var x = (new Date()).getTime();
+  var xhttpT = new XMLHttpRequest();
+  var xhttpH = new XMLHttpRequest();
+  var xhttpP = new XMLHttpRequest();
+  
+  xhttpT.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var yT = parseFloat(this.responseText);
+      chartAll.series[0].addPoint([x, yT], true, chartAll.series[0].data.length > 40);
+    }
+  };
+  xhttpT.open("GET", "/temperature", true);
+  xhttpT.send();
+  
+  xhttpH.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var yH = parseFloat(this.responseText);
+      chartAll.series[1].addPoint([x, yH], true, chartAll.series[1].data.length > 40);
+    }
+  };
+  xhttpH.open("GET", "/humidity", true);
+  xhttpH.send();
+  
+  xhttpP.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var yP = parseFloat(this.responseText);
+      chartAll.series[2].addPoint([x, yP], true, chartAll.series[2].data.length > 40);
+    }
+  };
+  xhttpP.open("GET", "/pressure", true);
+  xhttpP.send();
+}, 1000);
+var chartAll = new Highcharts.Chart({
+  chart: { renderTo: 'chart-all' },
+  title: { text: 'BME280 All Data' },
+  series: [
+    { name: 'Temperature', data: [], color: '#059e8a' },
+    { name: 'Humidity', data: [], color: '#1e90ff' },
+    { name: 'Pressure', data: [], color: '#18009c' }
+  ],
+  plotOptions: {
+    line: { animation: true, dataLabels: { enabled: true } }
+  },
+  xAxis: { type: 'datetime', dateTimeLabelFormats: { second: '%H:%M:%S' } },
+  yAxis: { title: { text: 'Values' } },
+  credits: { enabled: true }
+});
+
+setInterval(function () {
+  var x = (new Date()).getTime();
+  var xhttpT = new XMLHttpRequest();
+  var xhttpH = new XMLHttpRequest();
+  var xhttpP = new XMLHttpRequest();
+  
+  xhttpT.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var yT = parseFloat(this.responseText);
+      chartAll.series[0].addPoint([x, yT], true, chartAll.series[0].data.length > 40);
+    }
+  };
+  xhttpT.open("GET", "/temperature", true);
+  xhttpT.send();
+  
+  xhttpH.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var yH = parseFloat(this.responseText);
+      chartAll.series[1].addPoint([x, yH], true, chartAll.series[1].data.length > 40);
+    }
+  };
+  xhttpH.open("GET", "/humidity", true);
+  xhttpH.send();
+  
+  xhttpP.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var yP = parseFloat(this.responseText);
+      chartAll.series[2].addPoint([x, yP], true, chartAll.series[2].data.length > 40);
+    }
+  };
+  xhttpP.open("GET", "/pressure", true);
+  xhttpP.send();
+}, 1000);
+</script>
+</html>

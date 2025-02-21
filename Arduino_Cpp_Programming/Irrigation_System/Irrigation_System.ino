@@ -20,26 +20,25 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
-#include <LiquidCrystal_I2C.h>
+//#include <LiquidCrystal_I2C.h>
 #include <float.h>
 #include <string.h>
 
 #define CORE_0 (0x00)
 #define CORE_1 (0x01)
-#define DHTPIN 4       // ESP32 pin connected to the DHT22 data pin
-#define DHTTYPE DHT22  // DHT 22 (AM2302)
-#define ON_BOARD_LED  
+#define DHTPIN 22       // ESP32 pin connected to the DHT22 data pin
+#define DHTTYPE DHT11  // DHT 22 (AM2302)
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 DHT dht(DHTPIN, DHTTYPE);
-LiquidCrystal_I2C lcd(0x27, 16, 2); // Set the LCD address to 0x27 for a 16x2 display
+//LiquidCrystal_I2C lcd(0x27, 16, 2); // Set the LCD address to 0x27 for a 16x2 display
 
-TaskHandle_t Microcontroller_Core_0;  // Task handle for Core 0
-TaskHandle_t Microcontroller_Core_1;  // Task handle for Core 1
+//TaskHandle_t Microcontroller_Core_0;  // Task handle for Core 0
+//TaskHandle_t Microcontroller_Core_1;  // Task handle for Core 1
 
 // Replace with your network credentials
 const char* ssid = "Huawei-NET";
-const char* password = "extremehacktivist99*";
+const char* password = "extremehacktivist";
 
 
 void START_SERVER(void){
@@ -65,7 +64,6 @@ void CONNECT_WIFI(void){
     delay(1000);
     Serial.println("Connecting to WiFi..");
   }
-  digitalWrite(ON_BOARD_LED, HIGH);
   Serial.println(WiFi.localIP());
 }
 
@@ -123,28 +121,29 @@ int READ_SOIL_MOISTURE(void){
 void setup(){
 
   Serial.begin(115200);
-  lcd.begin();
-  lcd.backlight(); // Turn on the backlight
+  MOUNT_SYSTEM_FILES();
+  CONNECT_WIFI();
+  START_SERVER();
+  //lcd.begin();
+  //lcd.backlight(); // Turn on the backlight
   
   // Tasks to be executed on Core 0 and Core 1
-  xTaskCreatePinnedToCore(TaskCore0code, "Microcontroller_Core_0", 10000, NULL, 1, &Microcontroller_Core_0, CORE_0 );
-  xTaskCreatePinnedToCore(TaskCore1code, "Microcontroller_Core_1", 10000, NULL, 1, &Microcontroller_Core_1, CORE_1 );
+  //xTaskCreatePinnedToCore(TaskCore0code, "Microcontroller_Core_0", 10000, NULL, 1, &Microcontroller_Core_0, CORE_0 );
+  //xTaskCreatePinnedToCore(TaskCore1code, "Microcontroller_Core_1", 10000, NULL, 1, &Microcontroller_Core_1, CORE_1 );
 
   dht.begin();
-  pinMode(ON_BOARD_LED OUTPUT);
 
 }
  
 void loop(){
-  
+
+      
 }
 
-// Task on Microcontroller Core 0
+/*// Task on Microcontroller Core 0
 void TaskCore0code(void * parameter) {
   for (;;) {
-      MOUNT_SYSTEM_FILES();
-      START_SERVER();
-      CONNECT_WIFI();
+
   }
 }
 
@@ -153,4 +152,4 @@ void TaskCore1code(void * parameter) {
   for (;;) {
 
   }
-}
+}*/
