@@ -8,10 +8,13 @@ copies or substantial portions of the Software. -->
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://code.highcharts.com/highcharts.js"></script>
+  
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #121212;
+      background-image: url('https://images.unsplash.com/photo-1687894986611-c116bcb6a400?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+      background-size: cover;
+      background-position: center; 
       color: #fff;
       min-width: 310px;
       max-width: 800px;
@@ -32,6 +35,9 @@ copies or substantial portions of the Software. -->
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
     }
+	.button-container {
+      margin-bottom: 20px;
+    }
     .button {
       background: #f1c40f;
       border: none;
@@ -40,7 +46,7 @@ copies or substantial portions of the Software. -->
       font-size: 1rem;
       border-radius: 5px;
       cursor: pointer;
-      margin-top: 10px;
+      margin: 5px;
     }
     .button:hover {
       background: #d4ac0d;
@@ -48,7 +54,14 @@ copies or substantial portions of the Software. -->
   </style>
 </head>
 <body>
-  <h2>ESP Weather Station</h2>
+  <h2>Smart Irrigation System</h2>
+    <div class="button-container">
+    <button class="button" onclick="handleButtonClick('Home')">Home</button>
+    <button class="button" onclick="handleButtonClick('Seasons')">Seasons</button>
+    <button class="button" onclick="handleButtonClick('Configuration')">Configuration</button>
+    <button class="button" onclick="handleButtonClick('ModBus')">ModBus TCP/IP</button>
+	<button class="button" onclick="handleButtonClick('About')">About</button>
+  </div>
   <div id="chart-temperature" class="container"></div>
   <div id="chart-humidity" class="container"></div>
   <div id="chart-pressure" class="container"></div>
