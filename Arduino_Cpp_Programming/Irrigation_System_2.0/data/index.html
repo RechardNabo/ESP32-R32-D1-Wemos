@@ -8,87 +8,360 @@ copies or substantial portions of the Software. -->
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://code.highcharts.com/highcharts.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
   
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-image: url('https://images.unsplash.com/photo-1687894986611-c116bcb6a400?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
-      background-size: cover;
-      background-position: center; 
-      color: #fff;
-      min-width: 310px;
-      max-width: 800px;
-      margin: 20px auto;
-      padding: 20px;
-      text-align: center;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+    :root {
+      --primary-color: #1e88e5;
+      --secondary-color: #00c853;
+      --accent-color: #ff9800;
+      --dark-color: #0d47a1;
+      --light-color: #ffffff;
+      --shadow: 0 4px 15px rgba(30, 136, 229, 0.2);
+      --gradient: linear-gradient(135deg, rgba(30, 136, 229, 0.8), rgba(0, 200, 83, 0.8));
+      --glass: rgba(255, 255, 255, 0.8);
     }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-image: url('https://images.unsplash.com/photo-1558051962-7cb252019214?q=80&w=1374&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: var(--light-color);
+      min-width: 310px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+    }
+    
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(30, 136, 229, 0.2);
+      z-index: -1;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--primary-color);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: var(--shadow);
+    }
+    
     h2 {
       font-size: 2.5rem;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+      font-weight: 700;
+      color: var(--light-color);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
-    .container {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 20px;
-      margin: 10px 0;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
-    }
-	.button-container {
-      margin-bottom: 20px;
-    }
-    .button {
-      background: #f1c40f;
-      border: none;
-      color: #121212;
-      padding: 10px 20px;
+    
+    .subtitle {
       font-size: 1rem;
-      border-radius: 5px;
-      cursor: pointer;
-      margin: 5px;
+      opacity: 0.8;
+      margin-bottom: 20px;
     }
+    
+    .button-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    
+    .button {
+      background: var(--primary-color);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: var(--light-color);
+      padding: 12px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .button i {
+      margin-right: 8px;
+    }
+    
     .button:hover {
-      background: #d4ac0d;
+      background: var(--dark-color);
+      transform: translateY(-3px);
+      box-shadow: 0 7px 15px rgba(30, 136, 229, 0.4);
+    }
+    
+    .container {
+      background: var(--light-color);
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(30, 136, 229, 0.2);
+      transition: transform 0.3s ease;
+    }
+    
+    .container:hover {
+      transform: translateY(-5px);
+    }
+    
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .highcharts-container {
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    
+    .highcharts-background {
+      fill: transparent;
+    }
+    
+    .highcharts-title {
+      fill: var(--light-color) !important;
+      font-weight: 600 !important;
+      font-size: 1.2rem !important;
+    }
+    
+    .highcharts-axis-labels text {
+      fill: var(--light-color) !important;
+    }
+    
+    .highcharts-legend-item text {
+      fill: var(--light-color) !important;
+    }
+    
+    .highcharts-axis-line, .highcharts-grid-line {
+      stroke: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+.highcharts-axis-title {
+      font-size: 16px !important;
+      font-weight: bold !important;
+      fill: #0d47a1 !important;
+    }
+    
+    .highcharts-legend-item text {
+      font-size: 14px !important;
+      font-weight: bold !important;
+    }
+    
+    .highcharts-data-label text {
+      font-size: 14px !important;
+      font-weight: bold !important;
+    }
+    
+    .highcharts-yaxis-grid .highcharts-grid-line {
+      stroke-width: 1px;
+      stroke: rgba(30, 136, 229, 0.4);
+    }
+    
+    .highcharts-axis-line {
+      stroke-width: 2px !important;
+      stroke: rgba(30, 136, 229, 0.8) !important;
+    }
+    
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      h2 {
+        font-size: 2rem;
+      }
     }
   </style>
 </head>
 <body>
-  <h2>Smart Irrigation System</h2>
+  <header>
+    <h2>Smart Irrigation System</h2>
+    <p class="subtitle">Real-time environmental monitoring for efficient irrigation</p>
     <div class="button-container">
-    <button class="button" onclick="handleButtonClick('Home')">Home</button>
-    <button class="button" onclick="handleButtonClick('Seasons')">Seasons</button>
-    <button class="button" onclick="handleButtonClick('Configuration')">Configuration</button>
-    <button class="button" onclick="handleButtonClick('ModBus')">ModBus TCP/IP</button>
-	<button class="button" onclick="handleButtonClick('About')">About</button>
+      <button class="button active" onclick="location.href='/'"><i class="fas fa-home"></i>Home</button>
+      <button class="button" onclick="location.href='/seasons'"><i class="fas fa-leaf"></i>Seasons</button>
+      <button class="button" onclick="location.href='/configuration'"><i class="fas fa-cog"></i>Configuration</button>
+      <button class="button" onclick="location.href='/modbus'"><i class="fas fa-network-wired"></i>ModBus TCP/IP</button>
+      <button class="button" onclick="location.href='/about'"><i class="fas fa-info-circle"></i>About</button>
+    </div>
+  </header>
+  
+  <div class="charts-grid">
+    <div id="chart-temperature" class="container"></div>
+    <div id="chart-humidity" class="container"></div>
+    <div id="chart-pressure" class="container"></div>
   </div>
-  <div id="chart-temperature" class="container"></div>
-  <div id="chart-humidity" class="container"></div>
-  <div id="chart-pressure" class="container"></div>
+  
   <div id="chart-all" class="container"></div>
-</body>
+  
+  <div class="chart-legend-box">
+    <div class="legend-item">
+      <div class="legend-color" style="background-color: #2196F3;"></div>
+      <div class="legend-text">Temperature (°C)</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background-color: #00C853;"></div>
+      <div class="legend-text">Humidity (%)</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background-color: #FF9800;"></div>
+      <div class="legend-text">Pressure (hPa)</div>
+    </div>
+  </div>
+  
+  <footer>
+    <p>© 2025 Smart Irrigation System | Environmental Monitoring</p>
+  </footer>
+  
 <script>
+// Navigation is now handled directly through location.href in button onClick events
+
+Highcharts.setOptions({
+  chart: {
+    backgroundColor: '#ffffff',
+    style: {
+      fontFamily: 'Montserrat, sans-serif'
+    }
+  },
+  title: {
+    style: {
+      color: '#0d47a1',
+      fontWeight: 'bold',
+      fontSize: '20px'
+    }
+  },
+  legend: {
+    enabled: true,
+    itemStyle: {
+      color: '#0d47a1',
+      fontWeight: 'bold',
+      fontSize: '14px'
+    },
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderWidth: 1,
+    borderColor: '#1e88e5',
+    borderRadius: 5,
+    padding: 12,
+    itemMarginTop: 6,
+    itemMarginBottom: 6,
+    width: 200
+  },
+  xAxis: {
+    labels: {
+      style: {
+        color: '#0d47a1',
+        fontWeight: 'bold',
+        fontSize: '14px'
+      }
+    },
+    lineColor: 'rgba(30, 136, 229, 0.8)',
+    tickColor: 'rgba(30, 136, 229, 0.8)',
+    lineWidth: 2,
+    tickWidth: 2
+  },
+  yAxis: {
+    labels: {
+      style: {
+        color: '#0d47a1',
+        fontWeight: 'bold',
+        fontSize: '14px'
+      }
+    },
+    gridLineColor: 'rgba(30, 136, 229, 0.4)',
+    gridLineWidth: 1,
+    title: {
+      style: {
+        color: '#0d47a1',
+        fontWeight: 'bold',
+        fontSize: '16px'
+      }
+    }
+  },
+  plotOptions: {
+    series: {
+      marker: {
+        fillColor: '#ffffff',
+        lineWidth: 2,
+        lineColor: null,
+        radius: 6
+      },
+      lineWidth: 4
+    }
+  }
+});
 
 var chartT = new Highcharts.Chart({
   chart:{ renderTo : 'chart-temperature' },
-  title: { text: 'BME280 Temperature' },
+  title: { text: 'Temperature' },
   series: [{
     showInLegend: true,
+    name: 'Celsius',
     data: []
   }],
   plotOptions: {
     line: { animation: true,
-      dataLabels: { enabled: true }
+      dataLabels: { enabled: true, style: { color: '#333333', textOutline: '1px white' } }
     },
-    series: { color: '#059e8a' }
+    series: { color: '#2196F3' }
   },
   xAxis: { type: 'datetime',
     dateTimeLabelFormats: { second: '%H:%M:%S' }
   },
   yAxis: {
-    title: { text: 'Temperature (Celsius)' }
+    title: { 
+      text: 'Temperature (°C)',
+      style: {
+        color: '#0d47a1',
+        fontWeight: 'bold',
+        fontSize: '16px'
+      }
+    },
+    labels: {
+      style: {
+        color: '#0d47a1',
+        fontWeight: 'bold',
+        fontSize: '14px'
+      }
+    },
+    gridLineColor: 'rgba(30, 136, 229, 0.4)',
+    gridLineWidth: 1
   },
-  credits: { enabled: true }
+  credits: { enabled: false }
 });
 setInterval(function ( ) {
   var xhttp = new XMLHttpRequest();
@@ -110,24 +383,42 @@ setInterval(function ( ) {
 
 var chartH = new Highcharts.Chart({
   chart:{ renderTo:'chart-humidity' },
-  title: { text: 'BME280 Humidity' },
+  title: { text: 'Humidity' },
   series: [{
     showInLegend: true,
+    name: 'Percentage',
     data: []
   }],
   plotOptions: {
     line: { animation: true,
-      dataLabels: { enabled: true }
-    }
+      dataLabels: { enabled: true, style: { color: '#333333', textOutline: '1px white' } }
+    },
+    series: { color: '#00C853' }
   },
   xAxis: {
     type: 'datetime',
     dateTimeLabelFormats: { second: '%H:%M:%S' }
   },
   yAxis: {
-    title: { text: 'Humidity (%)' }
+    title: { 
+      text: 'Humidity (%)',
+      style: {
+        color: '#0d47a1',
+        fontWeight: 'bold',
+        fontSize: '16px'
+      }
+    },
+    labels: {
+      style: {
+        color: '#0d47a1',
+        fontWeight: 'bold',
+        fontSize: '14px'
+      }
+    },
+    gridLineColor: 'rgba(30, 136, 229, 0.4)',
+    gridLineWidth: 1
   },
-  credits: { enabled: true }
+  credits: { enabled: false }
 });
 setInterval(function ( ) {
   var xhttp = new XMLHttpRequest();
@@ -149,25 +440,42 @@ setInterval(function ( ) {
 
 var chartP = new Highcharts.Chart({
   chart:{ renderTo:'chart-pressure' },
-  title: { text: 'BME280 Pressure' },
+  title: { text: 'Pressure' },
   series: [{
     showInLegend: true,
+    name: 'hPa',
     data: []
   }],
   plotOptions: {
     line: { animation: true,
-      dataLabels: { enabled: true }
+      dataLabels: { enabled: true, style: { color: '#333333', textOutline: '1px white' } }
     },
-    series: { color: '#18009c' }
+    series: { color: '#FF9800' }
   },
   xAxis: {
     type: 'datetime',
     dateTimeLabelFormats: { second: '%H:%M:%S' }
   },
   yAxis: {
-    title: { text: 'Pressure (hPa)' }
+    title: { 
+      text: 'Pressure (hPa)',
+      style: {
+        color: '#0d47a1',
+        fontWeight: 'bold',
+        fontSize: '16px'
+      }
+    },
+    labels: {
+      style: {
+        color: '#0d47a1',
+        fontWeight: 'bold',
+        fontSize: '14px'
+      }
+    },
+    gridLineColor: 'rgba(30, 136, 229, 0.4)',
+    gridLineWidth: 1
   },
-  credits: { enabled: true }
+  credits: { enabled: false }
 });
 setInterval(function ( ) {
   var xhttp = new XMLHttpRequest();
@@ -189,67 +497,63 @@ setInterval(function ( ) {
 
 var chartAll = new Highcharts.Chart({
   chart: { renderTo: 'chart-all' },
-  title: { text: 'BME280 All Data' },
+  title: { text: 'Combined Sensor Data' },
   series: [
-    { name: 'Temperature', data: [], color: '#059e8a' },
-    { name: 'Humidity', data: [], color: '#1e90ff' },
-    { name: 'Pressure', data: [], color: '#18009c' }
+    { name: 'Temperature (°C)', data: [], color: '#2196F3' },
+    { name: 'Humidity (%)', data: [], color: '#00C853' },
+    { name: 'Pressure (hPa)', data: [], color: '#FF9800' }
   ],
   plotOptions: {
-    line: { animation: true, dataLabels: { enabled: true } }
+    line: { 
+      animation: true, 
+      dataLabels: { 
+        enabled: true,
+        style: { 
+          color: '#0d47a1', 
+          textOutline: '2px white',
+          fontWeight: 'bold',
+          fontSize: '14px'
+        }
+      } 
+    }
   },
   xAxis: { type: 'datetime', dateTimeLabelFormats: { second: '%H:%M:%S' } },
-  yAxis: { title: { text: 'Values' } },
-  credits: { enabled: true }
-});
-
-setInterval(function () {
-  var x = (new Date()).getTime();
-  var xhttpT = new XMLHttpRequest();
-  var xhttpH = new XMLHttpRequest();
-  var xhttpP = new XMLHttpRequest();
-  
-  xhttpT.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      var yT = parseFloat(this.responseText);
-      chartAll.series[0].addPoint([x, yT], true, chartAll.series[0].data.length > 40);
-    }
-  };
-  xhttpT.open("GET", "/temperature", true);
-  xhttpT.send();
-  
-  xhttpH.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      var yH = parseFloat(this.responseText);
-      chartAll.series[1].addPoint([x, yH], true, chartAll.series[1].data.length > 40);
-    }
-  };
-  xhttpH.open("GET", "/humidity", true);
-  xhttpH.send();
-  
-  xhttpP.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      var yP = parseFloat(this.responseText);
-      chartAll.series[2].addPoint([x, yP], true, chartAll.series[2].data.length > 40);
-    }
-  };
-  xhttpP.open("GET", "/pressure", true);
-  xhttpP.send();
-}, 1000);
-var chartAll = new Highcharts.Chart({
-  chart: { renderTo: 'chart-all' },
-  title: { text: 'BME280 All Data' },
-  series: [
-    { name: 'Temperature', data: [], color: '#059e8a' },
-    { name: 'Humidity', data: [], color: '#1e90ff' },
-    { name: 'Pressure', data: [], color: '#18009c' }
-  ],
-  plotOptions: {
-    line: { animation: true, dataLabels: { enabled: true } }
+  yAxis: {
+    title: { 
+      text: 'Values',
+      style: {
+        color: '#0d47a1',
+        fontWeight: 'bold',
+        fontSize: '16px'
+      }
+    },
+    labels: {
+      style: {
+        color: '#0d47a1',
+        fontWeight: 'bold',
+        fontSize: '14px'
+      }
+    },
+    gridLineColor: 'rgba(30, 136, 229, 0.4)',
+    gridLineWidth: 1
   },
-  xAxis: { type: 'datetime', dateTimeLabelFormats: { second: '%H:%M:%S' } },
-  yAxis: { title: { text: 'Values' } },
-  credits: { enabled: true }
+  legend: {
+    enabled: true,
+    itemStyle: {
+      color: '#0d47a1',
+      fontWeight: 'bold',
+      fontSize: '14px'
+    },
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderWidth: 1,
+    borderColor: '#1e88e5',
+    borderRadius: 5,
+    padding: 12,
+    itemMarginTop: 6,
+    itemMarginBottom: 6,
+    width: 200
+  },
+  credits: { enabled: false }
 });
 
 setInterval(function () {
@@ -286,4 +590,5 @@ setInterval(function () {
   xhttpP.send();
 }, 1000);
 </script>
+</body>
 </html>

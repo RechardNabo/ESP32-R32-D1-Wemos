@@ -70,9 +70,32 @@ void Connect_WiF(bool status){
 }
 
 void Web_Route(void){
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(LittleFS, "/index.html");
+  // Route for root / web page
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(LittleFS, "/index.html", "text/html");
   });
+
+  // Route for other pages
+  server.on("/seasons", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(LittleFS, "/seasons.html", "text/html");
+  });
+  
+  server.on("/configuration", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(LittleFS, "/configuration.html", "text/html");
+  });
+  
+  server.on("/modbus", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(LittleFS, "/modbus.html", "text/html");
+  });
+  
+  server.on("/about", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(LittleFS, "/about.html", "text/html");
+  });
+
+    server.onNotFound([](AsyncWebServerRequest *request){
+    request->redirect("/");
+  });
+
   server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/plain", readBME280Temperature().c_str());
   });

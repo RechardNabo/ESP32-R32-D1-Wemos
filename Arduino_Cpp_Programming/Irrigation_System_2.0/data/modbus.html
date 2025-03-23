@@ -1,0 +1,552 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-color: #1e88e5;
+      --secondary-color: #00c853;
+      --accent-color: #ff9800;
+      --dark-color: #0d47a1;
+      --light-color: #ffffff;
+      --shadow: 0 4px 15px rgba(30, 136, 229, 0.2);
+      --gradient: linear-gradient(135deg, rgba(30, 136, 229, 0.8), rgba(0, 200, 83, 0.8));
+      --glass: rgba(255, 255, 255, 0.8);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-image: url('https://images.unsplash.com/photo-1558051962-7cb252019214?q=80&w=1374&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: #333333;
+      min-width: 310px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+    }
+    
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(30, 136, 229, 0.2);
+      z-index: -1;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--primary-color);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: var(--shadow);
+    }
+    
+    h2 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      font-weight: 700;
+      color: var(--light-color);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .subtitle {
+      font-size: 1rem;
+      opacity: 0.8;
+      margin-bottom: 20px;
+      color: var(--light-color);
+    }
+    
+    .button-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    
+    .button {
+      background: var(--primary-color);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: var(--light-color);
+      padding: 12px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .button i {
+      margin-right: 8px;
+    }
+    
+    .button:hover {
+      background: var(--dark-color);
+      transform: translateY(-3px);
+      box-shadow: 0 7px 15px rgba(30, 136, 229, 0.4);
+    }
+    
+    .button.active {
+      background: var(--dark-color);
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .container {
+      background: var(--light-color);
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(30, 136, 229, 0.2);
+      transition: transform 0.3s ease;
+    }
+    
+    .section-title {
+      color: var(--dark-color);
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    
+    .description {
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.9rem;
+    }
+    
+    .form-control:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.2);
+      outline: none;
+    }
+    
+    .btn-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .btn {
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+    }
+    
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--dark-color);
+    }
+    
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .registry-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    
+    .registry-table th, 
+    .registry-table td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .registry-table th {
+      background-color: #f9f9f9;
+      font-weight: 600;
+      color: var(--dark-color);
+    }
+    
+    .registry-table tbody tr:hover {
+      background-color: rgba(30, 136, 229, 0.05);
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .status-active {
+      background-color: #00C853;
+    }
+    
+    .status-inactive {
+      background-color: #F44336;
+    }
+    
+    .status-pending {
+      background-color: #FFC107;
+    }
+    
+    .info-box {
+      background-color: rgba(30, 136, 229, 0.1);
+      border-left: 4px solid var(--primary-color);
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    
+    .info-box h4 {
+      color: var(--dark-color);
+      margin-bottom: 10px;
+    }
+    
+    .data-flow-diagram {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 30px 0;
+      text-align: center;
+    }
+    
+    .device-box {
+      display: inline-block;
+      width: 180px;
+      padding: 15px;
+      margin: 10px;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      vertical-align: middle;
+    }
+    
+    .device-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: var(--primary-color);
+    }
+    
+    .device-name {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .arrow {
+      display: inline-block;
+      margin: 0 10px;
+      color: var(--dark-color);
+      font-size: 1.5rem;
+      vertical-align: middle;
+    }
+    
+    .code-block {
+      background: #f5f5f5;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 20px;
+      font-family: monospace;
+      overflow-x: auto;
+      white-space: pre;
+      color: #333;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      
+      h2 {
+        font-size: 2rem;
+      }
+      
+      .data-flow-diagram {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .arrow {
+        transform: rotate(90deg);
+        margin: 10px 0;
+      }
+      
+      .registry-table {
+        font-size: 0.85rem;
+      }
+      
+      .registry-table th, 
+      .registry-table td {
+        padding: 8px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>ModBus TCP/IP</h2>
+    <p class="subtitle">Integration with industrial control systems</p>
+    <div class="button-container">
+      <button class="button" onclick="location.href='index.html'"><i class="fas fa-home"></i>Home</button>
+      <button class="button" onclick="location.href='seasons.html'"><i class="fas fa-leaf"></i>Seasons</button>
+      <button class="button" onclick="location.href='configuration.html'"><i class="fas fa-cog"></i>Configuration</button>
+      <button class="button active" onclick="location.href='modbus.html'"><i class="fas fa-network-wired"></i>ModBus TCP/IP</button>
+      <button class="button" onclick="location.href='about.html'"><i class="fas fa-info-circle"></i>About</button>
+    </div>
+  </header>
+  
+  <div class="container">
+    <h3 class="section-title">ModBus TCP/IP Configuration</h3>
+    <p class="description">
+      Configure the smart irrigation system to communicate with industrial control systems, PLCs, and SCADA systems using the ModBus TCP/IP protocol. This allows for seamless integration with existing industrial automation infrastructure.
+    </p>
+    
+    <div class="info-box">
+      <h4><i class="fas fa-info-circle"></i> What is ModBus TCP/IP?</h4>
+      <p>ModBus TCP/IP is an industrial communication protocol used for transmitting information between electronic devices in industrial automation systems. It enables your irrigation system to communicate with programmable logic controllers (PLCs), SCADA systems, and other industrial equipment.</p>
+    </div>
+    
+    <div class="data-flow-diagram">
+      <div class="device-box">
+        <div class="device-icon"><i class="fas fa-tint"></i></div>
+        <div class="device-name">Smart Irrigation System</div>
+        <div class="device-role">ModBus Server</div>
+      </div>
+      
+      <div class="arrow"><i class="fas fa-exchange-alt"></i></div>
+      
+      <div class="device-box">
+        <div class="device-icon"><i class="fas fa-microchip"></i></div>
+        <div class="device-name">PLC / SCADA</div>
+        <div class="device-role">ModBus Client</div>
+      </div>
+      
+      <div class="arrow"><i class="fas fa-exchange-alt"></i></div>
+      
+      <div class="device-box">
+        <div class="device-icon"><i class="fas fa-desktop"></i></div>
+        <div class="device-name">Control Center</div>
+        <div class="device-role">Visualization</div>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label for="modbusEnabled">Enable ModBus TCP/IP Server</label>
+      <select class="form-control" id="modbusEnabled">
+        <option value="enabled" selected>Enabled</option>
+        <option value="disabled">Disabled</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="ipAddress">TCP/IP Address</label>
+      <input type="text" class="form-control" id="ipAddress" value="192.168.1.100">
+    </div>
+    
+    <div class="form-group">
+      <label for="port">TCP Port</label>
+      <input type="number" class="form-control" id="port" value="502">
+    </div>
+    
+    <div class="form-group">
+      <label for="unitId">Unit ID</label>
+      <input type="number" class="form-control" id="unitId" value="1">
+    </div>
+    
+    <h3 class="section-title" style="margin-top: 30px;">ModBus Register Map</h3>
+    <p class="description">
+      The following registers are available for reading and writing values to control the irrigation system. Use these addresses in your ModBus client application.
+    </p>
+    
+    <table class="registry-table">
+      <thead>
+        <tr>
+          <th>Address</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Access</th>
+          <th>Units</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>40001</td>
+          <td>Holding Register</td>
+          <td>Temperature</td>
+          <td>Read Only</td>
+          <td>0.1 °C</td>
+        </tr>
+        <tr>
+          <td>40002</td>
+          <td>Holding Register</td>
+          <td>Humidity</td>
+          <td>Read Only</td>
+          <td>0.1 %</td>
+        </tr>
+        <tr>
+          <td>40003</td>
+          <td>Holding Register</td>
+          <td>Pressure</td>
+          <td>Read Only</td>
+          <td>0.1 hPa</td>
+        </tr>
+        <tr>
+          <td>40004</td>
+          <td>Holding Register</td>
+          <td>Soil Moisture Zone 1</td>
+          <td>Read Only</td>
+          <td>0.1 %</td>
+        </tr>
+        <tr>
+          <td>40005</td>
+          <td>Holding Register</td>
+          <td>Soil Moisture Zone 2</td>
+          <td>Read Only</td>
+          <td>0.1 %</td>
+        </tr>
+        <tr>
+          <td>40006</td>
+          <td>Holding Register</td>
+          <td>Soil Moisture Zone 3</td>
+          <td>Read Only</td>
+          <td>0.1 %</td>
+        </tr>
+        <tr>
+          <td>40101</td>
+          <td>Holding Register</td>
+          <td>Zone 1 Valve Control</td>
+          <td>Read/Write</td>
+          <td>0=Off, 1=On</td>
+        </tr>
+        <tr>
+          <td>40102</td>
+          <td>Holding Register</td>
+          <td>Zone 2 Valve Control</td>
+          <td>Read/Write</td>
+          <td>0=Off, 1=On</td>
+        </tr>
+        <tr>
+          <td>40103</td>
+          <td>Holding Register</td>
+          <td>Zone 3 Valve Control</td>
+          <td>Read/Write</td>
+          <td>0=Off, 1=On</td>
+        </tr>
+        <tr>
+          <td>40201</td>
+          <td>Holding Register</td>
+          <td>System Mode</td>
+          <td>Read/Write</td>
+          <td>0=Manual, 1=Auto</td>
+        </tr>
+        <tr>
+          <td>40202</td>
+          <td>Holding Register</td>
+          <td>Alarm Status</td>
+          <td>Read Only</td>
+          <td>Bit Field</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h3 class="section-title" style="margin-top: 30px;">Example Code</h3>
+    <p class="description">
+      Here's an example of how to read the temperature value from register 40001 using a Python ModBus client:
+    </p>
+    
+    <div class="code-block">
+from pymodbus.client.sync import ModbusTcpClient
+
+# Connect to the ModBus server
+client = ModbusTcpClient('192.168.1.100', port=502)
+connection = client.connect()
+
+# Read the temperature from register 40001
+# Note: Modbus addresses are 0-based, so register 40001 is at address 0
+response = client.read_holding_registers(address=0, count=1, unit=1)
+
+if not response.isError():
+    # Convert the raw value to temperature (divide by 10 for 0.1°C precision)
+    temperature = response.registers[0] / 10.0
+    print(f"Current temperature: {temperature}°C")
+else:
+    print("Error reading temperature")
+
+# Close the connection
+client.close()
+    </div>
+    
+    <div class="btn-row">
+      <button class="btn btn-secondary">Test Connection</button>
+      <button class="btn btn-primary">Save Configuration</button>
+    </div>
+  </div>
+  
+  <footer>
+    <p>© 2025 Smart Irrigation System | Environmental Monitoring</p>
+  </footer>
+  
+<script>
+  // Add any JavaScript functionality you need here
+</script>
+</body>
+</html>
