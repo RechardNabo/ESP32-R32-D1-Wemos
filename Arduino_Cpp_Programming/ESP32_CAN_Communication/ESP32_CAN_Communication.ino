@@ -1,181 +1,202 @@
 #include <SPI.h>
 #include <mcp2515.h>
 #include "DHT.h"
+#include <WiFi.h>
+#include <ModbusTCPServer.h>
+
+// WiFi credentials
+const char* ssid = "YOUR_WIFI_SSID";
+const char* password = "YOUR_WIFI_PASSWORD";
+
+// Modbus TCP Server
+WiFiServer wifiServer(502);  // Modbus TCP default port
+ModbusTCPServer modbusTCPServer;
+
+// Modbus registers (Holding Registers)
+#define TEMP_REG 0    // Temperature register address
+#define HUMID_REG 1   // Humidity register address
 
 struct can_frame canMsg;
 MCP2515 mcp2515(5);
 bool ledState = false;
 
-
 #define DHTPIN  26 // DHT 11 PIN
 #define DHTTYPE DHT11 // DHT 11 Type
 DHT dht(DHTPIN, DHTTYPE);
 
-
 void setup() {
   Serial.begin(9600);
   
+  // Connect to WiFi
+  connectToWiFi();
+  
+  // Start Modbus TCP server
+  wifiServer.begin();
+  modbusTCPServer.begin(wifiServer);
+  
+  // Configure Modbus registers (2 holding registers)
+  modbusTCPServer.configureHoldingRegisters(0x00, 2);
+  
   mcp2515.reset();
-  // On ESP32, try to exactly match Raspberry Pi timing parameters
-  mcp2515.setBitrate(CAN_500KBPS, MCP_8MHZ);  // Explicitly specify clock
+  mcp2515.setBitrate(CAN_500KBPS, MCP_8MHZ);
   mcp2515.setNormalMode();
   pinMode(LED_BUILTIN, OUTPUT);
   Serial.println("CAN Send & Receive Ready");
-}
-String readBME280Temperature() {
-    return String(dht.readTemperature());
+  Serial.println("Modbus TCP Server Ready");
 }
 
-String readBME280Humidity() {
-   return String(dht.readHumidity());
+void connectToWiFi() {
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  
+  WiFi.begin(ssid, password);
+  
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  
+  Serial.println("\nWiFi connected");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
+float readDHTTemperature() {
+  float temp = dht.readTemperature();
+  if (isnan(temp)) {
+    Serial.println("Failed to read temperature from DHT sensor!");
+    return -1.0;
+  }
+  return temp;
+}
+
+float readDHTHumidity() {
+  float humid = dht.readHumidity();
+  if (isnan(humid)) {
+    Serial.println("Failed to read humidity from DHT sensor!");
+    return -1.0;
+  }
+  return humid;
 }
 
 void loop() {
   printSystemInfo();
-  sendCANMessage("ESP32");
+  sendCANMessage();
   receiveCANMessage();
+  handleModbusRequests();
+  
   Serial.println("======================================");
-  Serial.println("Temperature : "+String(dht.readTemperature())+" *C");
-  Serial.println("Humidity    : "+String(dht.readHumidity())+" %");
+  float temp = readDHTTemperature();
+  float humid = readDHTHumidity();
+  if (!isnan(temp) && !isnan(humid)) {
+    Serial.println("Temperature : " + String(temp) + " *C");
+    Serial.println("Humidity    : " + String(humid) + " %");
+    // Update Modbus registers
+    modbusTCPServer.holdingRegisterWrite(TEMP_REG, (uint16_t)(temp * 10));  // Scale by 10 for precision
+    modbusTCPServer.holdingRegisterWrite(HUMID_REG, (uint16_t)(humid * 10));
+  }
   Serial.println("======================================");
   delay(500);
 }
 
-void sendCANMessage(String message) {
-  canMsg.can_id = 0x123;
-  canMsg.can_dlc = min((int)message.length(), 8); // Max 8 bytes per CAN frame
-
-  for (int i = 0; i < canMsg.can_dlc; i++) {
-    canMsg.data[i] = message[i];
+void handleModbusRequests() {
+  // Accept incoming connections and process Modbus requests
+  int packetSize = modbusTCPServer.accept();
+  if (packetSize > 0) {
+    int requestResult = modbusTCPServer.poll();
+    
+    if (requestResult > 0) {
+      Serial.println("Modbus request processed successfully");
+    } else if (requestResult < 0) {
+      Serial.println("Modbus request processing failed");
+    }
   }
+}
 
-  if (mcp2515.sendMessage(&canMsg) == MCP2515::ERROR_OK) {
-    Serial.print("Sent CAN Message: ");
-    Serial.println(message);
+void sendCANMessage() {
+  float temp = readDHTTemperature();
+  float humid = readDHTHumidity();
+  
+  if (!isnan(temp) && !isnan(humid)) {
+    canMsg.can_id = 0x124;
+    canMsg.can_dlc = 8;
+    
+    uint32_t tempBits;
+    memcpy(&tempBits, &temp, sizeof(temp));
+    uint32_t humidBits;
+    memcpy(&humidBits, &humid, sizeof(humid));
+    
+    canMsg.data[0] = (tempBits >> 24) & 0xFF;
+    canMsg.data[1] = (tempBits >> 16) & 0xFF;
+    canMsg.data[2] = (tempBits >> 8) & 0xFF;
+    canMsg.data[3] = tempBits & 0xFF;
+    
+    canMsg.data[4] = (humidBits >> 24) & 0xFF;
+    canMsg.data[5] = (humidBits >> 16) & 0xFF;
+    canMsg.data[6] = (humidBits >> 8) & 0xFF;
+    canMsg.data[7] = humidBits & 0xFF;
+    
+    if (mcp2515.sendMessage(&canMsg) == MCP2515::ERROR_OK) {
+      Serial.print("Sent CAN Message - Temp: ");
+      Serial.print(temp);
+      Serial.print("°C, Humid: ");
+      Serial.print(humid);
+      Serial.println("%");
+    } else {
+      Serial.println("Error sending message");
+    }
   } else {
-    Serial.println("Error sending message");
+    Serial.println("Skipping CAN message due to invalid sensor data");
   }
 }
 
 void receiveCANMessage() {
   if (mcp2515.readMessage(&canMsg) == MCP2515::ERROR_OK) {
-    // Print received message header with timestamp
     Serial.println("\n==== CAN MESSAGE RECEIVED ====");
     Serial.print("[");
     Serial.print(millis() / 1000.0, 2);
     Serial.println("s]");
     
-    // Print CAN ID
     Serial.print("CAN ID: 0x");
     Serial.println(canMsg.can_id, HEX);
     
-    // Print data length
     Serial.print("Data Length: ");
     Serial.println(canMsg.can_dlc);
     
-    // Print data in multiple formats
-    Serial.println("Data Representation:");
-    
-    // Format 1: Hexadecimal (traditional)
     Serial.print("HEX: ");
     for (int i = 0; i < canMsg.can_dlc; i++) {
-      if (canMsg.data[i] < 0x10) {
-        Serial.print("0");
-      }
+      if (canMsg.data[i] < 0x10) Serial.print("0");
       Serial.print(canMsg.data[i], HEX);
       Serial.print(" ");
     }
     Serial.println();
     
-    // Format 2: Decimal
-    Serial.print("DEC: ");
-    for (int i = 0; i < canMsg.can_dlc; i++) {
-      Serial.print(canMsg.data[i], DEC);
-      Serial.print(" ");
-    }
-    Serial.println();
-    
-    // Format 3: ASCII
-    Serial.print("ASCII: ");
-    for (int i = 0; i < canMsg.can_dlc; i++) {
-      // Only print ASCII for printable characters
-      if (canMsg.data[i] >= 32 && canMsg.data[i] <= 126) {
-        Serial.print((char)canMsg.data[i]);
-      } else {
-        Serial.print(".");
-      }
-    }
-    Serial.println();
-    
-    // Format 4: Binary (for bit-level inspection)
-    Serial.print("BIN: ");
-    for (int i = 0; i < canMsg.can_dlc; i++) {
-      for (int b = 7; b >= 0; b--) {
-        Serial.print(bitRead(canMsg.data[i], b));
-      }
-      Serial.print(" ");
-    }
-    Serial.println();
-    
-    // Data interpretation based on message ID
-    Serial.println("\nData Interpretation:");
-    
-    // Example interpretations based on CAN ID
-    switch (canMsg.can_id) {
-      case 0x123:
-        Serial.println("Message Type: Standard Test Message");
-        if (canMsg.can_dlc >= 8) {
-          Serial.print("Text content: ");
-          for (int i = 0; i < canMsg.can_dlc; i++) {
-            if (canMsg.data[i] >= 32 && canMsg.data[i] <= 126) {
-              Serial.print((char)canMsg.data[i]);
-            }
-          }
-          Serial.println();
-        }
-        break;
-        
-      case 0x100:
-        Serial.println("Message Type: Sensor Data");
-        if (canMsg.can_dlc >= 2) {
-          int sensorValue = (canMsg.data[0] << 8) | canMsg.data[1];
-          Serial.print("Sensor value: ");
-          Serial.println(sensorValue);
-        }
-        break;
-        
-      case 0x200:
-        Serial.println("Message Type: Status Message");
-        if (canMsg.can_dlc >= 1) {
-          Serial.print("Status code: ");
-          Serial.println(canMsg.data[0], HEX);
-        }
-        break;
-        
-      default:
-        Serial.print("Message Type: Unknown (ID: 0x");
-        Serial.print(canMsg.can_id, HEX);
-        Serial.println(")");
+    if (canMsg.can_id == 0x124 && canMsg.can_dlc == 8) {
+      uint32_t tempBits = ((uint32_t)canMsg.data[0] << 24) |
+                         ((uint32_t)canMsg.data[1] << 16) |
+                         ((uint32_t)canMsg.data[2] << 8) |
+                         canMsg.data[3];
+      uint32_t humidBits = ((uint32_t)canMsg.data[4] << 24) |
+                          ((uint32_t)canMsg.data[5] << 16) |
+                          ((uint32_t)canMsg.data[6] << 8) |
+                          canMsg.data[7];
+      
+      float receivedTemp, receivedHumid;
+      memcpy(&receivedTemp, &tempBits, sizeof(float));
+      memcpy(&receivedHumid, &humidBits, sizeof(float));
+      
+      Serial.println("\nData Interpretation:");
+      Serial.println("Message Type: Sensor Data");
+      Serial.print("Temperature: ");
+      Serial.print(receivedTemp);
+      Serial.println("°C");
+      Serial.print("Humidity: ");
+      Serial.print(receivedHumid);
+      Serial.println("%");
     }
     
-    // Message statistics
-    static unsigned long msgCount = 0;
-    static unsigned long msgCountByID[8] = {0}; // Track messages by ID (up to 8 IDs)
-    msgCount++;
-    
-    // Increment counter for this specific ID (simple hash to index)
-    int idIndex = canMsg.can_id % 8;
-    msgCountByID[idIndex]++;
-    
-    Serial.println("\nMessage Statistics:");
-    Serial.print("Total messages received: ");
-    Serial.println(msgCount);
-    Serial.print("Messages with this ID: ");
-    Serial.println(msgCountByID[idIndex]);
-    
-    Serial.println("============================");
+    toggleLED();
   }
-  toggleLED();
 }
 
 void toggleLED() {
@@ -188,6 +209,9 @@ void printSystemInfo() {
   Serial.print("Processor Frequency: ");
   Serial.print(F_CPU / 1000000);
   Serial.println(" MHz");
+  
+  Serial.print("WiFi Status: ");
+  Serial.println(WiFi.status() == WL_CONNECTED ? "Connected" : "Disconnected");
   
   #if defined(__AVR__)
     Serial.println("Architecture: AVR");
