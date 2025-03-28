@@ -2,19 +2,10 @@
 #include <mcp2515.h>
 #include "DHT.h"
 #include <WiFi.h>
-#include <ModbusTCPServer.h>
 
 // WiFi credentials
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
-
-// Modbus TCP Server
-WiFiServer wifiServer(502);  // Modbus TCP default port
-ModbusTCPServer modbusTCPServer;
-
-// Modbus registers (Holding Registers)
-#define TEMP_REG 0    // Temperature register address
-#define HUMID_REG 1   // Humidity register address
+const char* ssid = "Huawei-NET";
+const char* password = "extremehacktivist";
 
 struct can_frame canMsg;
 MCP2515 mcp2515(5);
@@ -24,25 +15,78 @@ bool ledState = false;
 #define DHTTYPE DHT11 // DHT 11 Type
 DHT dht(DHTPIN, DHTTYPE);
 
+// Architecture ID enum
+enum ArchitectureID {
+  ARCH_UNKNOWN = 0,
+  ARCH_AVR = 1,
+  ARCH_ARM = 2,
+  ARCH_XTENSA = 3,  // ESP32/ESP8266
+  ARCH_RISCV = 4,
+  ARCH_SAM3X = 5,   // Arduino Due
+  ARCH_STM32 = 6,
+  ARCH_MEGAAVR = 7
+};
+
+// Get architecture ID
+uint8_t getArchitectureID() {
+  #if defined(__AVR__)
+    return ARCH_AVR;
+  #elif defined(__arm__)
+    return ARCH_ARM;
+  #elif defined(__xtensa__)
+    return ARCH_XTENSA;
+  #elif defined(__riscv)
+    return ARCH_RISCV;
+  #elif defined(__SAM3X8E__)
+    return ARCH_SAM3X;
+  #elif defined(ARDUINO_ARCH_STM32)
+    return ARCH_STM32;
+  #elif defined(ARDUINO_ARCH_MEGAAVR)
+    return ARCH_MEGAAVR;
+  #else
+    return ARCH_UNKNOWN;
+  #endif
+}
+
+// Get architecture name
+String getArchitectureName(uint8_t archID) {
+  switch (archID) {
+    case ARCH_AVR:
+      return "AVR";
+    case ARCH_ARM:
+      return "ARM";
+    case ARCH_XTENSA:
+      return "Xtensa";
+    case ARCH_RISCV:
+      return "RISC-V";
+    case ARCH_SAM3X:
+      return "SAM3X (Arduino Due)";
+    case ARCH_STM32:
+      return "STM32";
+    case ARCH_MEGAAVR:
+      return "MegaAVR";
+    default:
+      return "Unknown";
+  }
+}
+
 void setup() {
   Serial.begin(9600);
   
+  // Initialize DHT sensor
+  dht.begin();
+  
   // Connect to WiFi
   connectToWiFi();
-  
-  // Start Modbus TCP server
-  wifiServer.begin();
-  modbusTCPServer.begin(wifiServer);
-  
-  // Configure Modbus registers (2 holding registers)
-  modbusTCPServer.configureHoldingRegisters(0x00, 2);
   
   mcp2515.reset();
   mcp2515.setBitrate(CAN_500KBPS, MCP_8MHZ);
   mcp2515.setNormalMode();
   pinMode(LED_BUILTIN, OUTPUT);
   Serial.println("CAN Send & Receive Ready");
-  Serial.println("Modbus TCP Server Ready");
+  
+  // Send architecture info via CAN on startup
+  sendArchitectureViaCAN();
 }
 
 void connectToWiFi() {
@@ -51,14 +95,20 @@ void connectToWiFi() {
   
   WiFi.begin(ssid, password);
   
-  while (WiFi.status() != WL_CONNECTED) {
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
     delay(500);
     Serial.print(".");
+    attempts++;
   }
   
-  Serial.println("\nWiFi connected");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nWiFi connected");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("\nWiFi connection failed!");
+  }
 }
 
 float readDHTTemperature() {
@@ -80,36 +130,57 @@ float readDHTHumidity() {
 }
 
 void loop() {
+  // Print system info
   printSystemInfo();
-  sendCANMessage();
-  receiveCANMessage();
-  handleModbusRequests();
   
-  Serial.println("======================================");
+  // Send architecture via CAN every 5 seconds
+  static unsigned long lastSendTime = 0;
+  if (millis() - lastSendTime > 5000) {
+    sendArchitectureViaCAN();
+    lastSendTime = millis();
+  }
+  
+  // Send temperature and humidity data
+  sendCANMessage();
+  
+  receiveCANMessage();
+  
+  // Read and update sensor data
   float temp = readDHTTemperature();
   float humid = readDHTHumidity();
   if (!isnan(temp) && !isnan(humid)) {
+    Serial.println("======================================");
     Serial.println("Temperature : " + String(temp) + " *C");
     Serial.println("Humidity    : " + String(humid) + " %");
-    // Update Modbus registers
-    modbusTCPServer.holdingRegisterWrite(TEMP_REG, (uint16_t)(temp * 10));  // Scale by 10 for precision
-    modbusTCPServer.holdingRegisterWrite(HUMID_REG, (uint16_t)(humid * 10));
+    Serial.println("======================================");
   }
-  Serial.println("======================================");
+  
   delay(500);
 }
 
-void handleModbusRequests() {
-  // Accept incoming connections and process Modbus requests
-  int packetSize = modbusTCPServer.accept();
-  if (packetSize > 0) {
-    int requestResult = modbusTCPServer.poll();
-    
-    if (requestResult > 0) {
-      Serial.println("Modbus request processed successfully");
-    } else if (requestResult < 0) {
-      Serial.println("Modbus request processing failed");
-    }
+void sendArchitectureViaCAN() {
+  uint8_t archID = getArchitectureID();
+  String archName = getArchitectureName(archID);
+  
+  // Convert string to bytes for CAN transmission
+  int nameLength = archName.length();
+  if (nameLength > 8) {
+    nameLength = 8; // CAN message can only hold 8 bytes
+  }
+  
+  canMsg.can_id = 0x100;  // Architecture message ID
+  canMsg.can_dlc = nameLength;
+  
+  // Copy each character of the architecture name to the CAN message
+  for (int i = 0; i < nameLength; i++) {
+    canMsg.data[i] = (uint8_t)archName.charAt(i);
+  }
+  
+  if (mcp2515.sendMessage(&canMsg) == MCP2515::ERROR_OK) {
+    Serial.print("Sent CAN Message - Architecture: ");
+    Serial.println(archName);
+  } else {
+    Serial.println("Error sending architecture message");
   }
 }
 
@@ -118,7 +189,7 @@ void sendCANMessage() {
   float humid = readDHTHumidity();
   
   if (!isnan(temp) && !isnan(humid)) {
-    canMsg.can_id = 0x124;
+    canMsg.can_id = 0x125;
     canMsg.can_dlc = 8;
     
     uint32_t tempBits;
@@ -171,7 +242,21 @@ void receiveCANMessage() {
     }
     Serial.println();
     
-    if (canMsg.can_id == 0x124 && canMsg.can_dlc == 8) {
+    // Interpret messages based on CAN ID
+    if (canMsg.can_id == 0x100) {
+      // Architecture message - convert bytes back to string
+      String receivedArchName = "";
+      for (int i = 0; i < canMsg.can_dlc; i++) {
+        receivedArchName += (char)canMsg.data[i];
+      }
+      
+      Serial.println("\nData Interpretation:");
+      Serial.println("Message Type: Architecture Info");
+      Serial.print("Architecture: ");
+      Serial.println(receivedArchName);
+    }
+    else if (canMsg.can_id == 0x124 && canMsg.can_dlc == 8) {
+      // Temperature and humidity message
       uint32_t tempBits = ((uint32_t)canMsg.data[0] << 24) |
                          ((uint32_t)canMsg.data[1] << 16) |
                          ((uint32_t)canMsg.data[2] << 8) |
@@ -213,23 +298,8 @@ void printSystemInfo() {
   Serial.print("WiFi Status: ");
   Serial.println(WiFi.status() == WL_CONNECTED ? "Connected" : "Disconnected");
   
-  #if defined(__AVR__)
-    Serial.println("Architecture: AVR");
-  #elif defined(__arm__)
-    Serial.println("Architecture: ARM");
-  #elif defined(__xtensa__)
-    Serial.println("Architecture: Xtensa (ESP32/ESP8266)");
-  #elif defined(__riscv)
-    Serial.println("Architecture: RISC-V");
-  #elif defined(__SAM3X8E__)
-    Serial.println("Architecture: SAM3X (Arduino Due)");
-  #elif defined(ARDUINO_ARCH_STM32)
-    Serial.println("Architecture: STM32");
-  #elif defined(ARDUINO_ARCH_MEGAAVR)
-    Serial.println("Architecture: MegaAVR");
-  #else
-    Serial.println("Architecture: Unknown");
-  #endif
+  Serial.print("Architecture: ");
+  Serial.println(getArchitectureName(getArchitectureID()));
   
   Serial.print("Uptime: ");
   Serial.print(millis() / 1000);
