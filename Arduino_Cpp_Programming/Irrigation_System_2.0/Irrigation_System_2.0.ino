@@ -166,6 +166,6 @@ void loop(){
     display.setCursor(0, 54);
     display.println("Water Pump : OFF ");
     display.display();
-    delay(2000);
+    delay(500);
     display.clearDisplay();  
 }

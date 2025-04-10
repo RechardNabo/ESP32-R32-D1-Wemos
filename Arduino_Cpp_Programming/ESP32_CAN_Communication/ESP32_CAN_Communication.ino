@@ -2,18 +2,47 @@
 #include <mcp2515.h>
 #include "DHT.h"
 #include <WiFi.h>
+#include <SoftwareSerial.h>
 
 // WiFi credentials
 const char* ssid = "Huawei-NET";
 const char* password = "extremehacktivist";
 
+// CAN Bus setup
 struct can_frame canMsg;
 MCP2515 mcp2515(5);
 bool ledState = false;
 
+// DHT sensor setup
 #define DHTPIN  26 // DHT 11 PIN
 #define DHTTYPE DHT11 // DHT 11 Type
 DHT dht(DHTPIN, DHTTYPE);
+
+// RS485 setup
+#define RXPin        16  // Serial Receive pin
+#define TXPin        27  // Serial Transmit pin
+ 
+// RS485 control
+#define SERIAL_COMMUNICATION_CONTROL_PIN 25 // Transmission set pin
+#define RS485_TX_PIN_VALUE HIGH
+#define RS485_RX_PIN_VALUE LOW
+
+// Try using HardwareSerial instead of SoftwareSerial for better reliability
+// Comment out this line and uncomment the one below if still having issues
+SoftwareSerial RS485Serial(RXPin, TXPin); // RX, TX
+
+// Alternate hardware serial option (if needed)
+// #define RS485Serial Serial2
+int byteSend;
+String dataReceived;
+bool isDataReceived = false;
+
+// Fixed message to send via RS485
+#define RS485_MESSAGE "ESP32 MAX485"
+
+// Time tracking for RS485 response
+unsigned long lastRS485SendTime = 0;
+const unsigned long RS485_SEND_INTERVAL = 1000; // 1 second interval
 
 // Architecture ID enum
 enum ArchitectureID {
@@ -79,6 +108,7 @@ void setup() {
   // Connect to WiFi
   connectToWiFi();
   
+  // Initialize CAN bus
   mcp2515.reset();
   mcp2515.setBitrate(CAN_500KBPS, MCP_8MHZ);
   mcp2515.setNormalMode();
@@ -87,6 +117,19 @@ void setup() {
   
   // Send architecture info via CAN on startup
   sendArchitectureViaCAN();
+  
+  // Initialize RS485
+  pinMode(SERIAL_COMMUNICATION_CONTROL_PIN, OUTPUT);
+  digitalWrite(SERIAL_COMMUNICATION_CONTROL_PIN, RS485_RX_PIN_VALUE);
+  
+  // Initialize RS485 serial with same baud rate as RPi (9600)
+  RS485Serial.begin(9600);
+  
+  // Alternative baud rates to try if communication is unreliable
+  // RS485Serial.begin(4800);  // Try slower baud rate
+  // RS485Serial.begin(19200); // Try faster baud rate
+  
+  Serial.println("RS485 Ready");
 }
 
 void connectToWiFi() {
@@ -133,9 +176,12 @@ void loop() {
   // Print system info
   printSystemInfo();
   
+  // Handle RS485 communications
+  handleRS485();
+  
   // Send architecture via CAN every 5 seconds
   static unsigned long lastSendTime = 0;
-  if (millis() - lastSendTime > 5000) {
+  if (millis() - lastSendTime > 500) {
     sendArchitectureViaCAN();
     lastSendTime = millis();
   }
@@ -143,6 +189,7 @@ void loop() {
   // Send temperature and humidity data
   sendCANMessage();
   
+  // Receive CAN messages
   receiveCANMessage();
   
   // Read and update sensor data
@@ -156,6 +203,56 @@ void loop() {
   }
   
   delay(500);
+}
+
+void handleRS485() {
+  // Set to receive mode
+  digitalWrite(SERIAL_COMMUNICATION_CONTROL_PIN, RS485_RX_PIN_VALUE);
+ 
+  // Check for incoming data
+  if (RS485Serial.available()) {
+    // Wait a bit to ensure all data is received
+    delay(50);
+    
+    // Read the data
+    dataReceived = RS485Serial.readString();
+    
+    // Print received data as string
+    Serial.print("RS485 Data received (string): ");
+    Serial.println(dataReceived);
+    
+    // Also print as hex bytes for debugging
+    Serial.print("RS485 Data received (hex): ");
+    for (int i = 0; i < dataReceived.length(); i++) {
+      uint8_t byte = (uint8_t)dataReceived[i];
+      Serial.print("0x");
+      if (byte < 16) Serial.print("0");
+      Serial.print(byte, HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
+    
+    // Respond with ESP32 message - make sure we delay enough
+    delay(50); // Longer delay to ensure receive complete
+    
+    // Switch to transmit mode
+    digitalWrite(SERIAL_COMMUNICATION_CONTROL_PIN, RS485_TX_PIN_VALUE);
+    delay(10); // Small delay after switching direction
+    
+    // Send the fixed ESP32 message
+    Serial.print("RS485 Sending: ");
+    Serial.println(RS485_MESSAGE);
+    RS485Serial.println(RS485_MESSAGE);
+    
+    // Longer delay to ensure message is sent completely
+    delay(50);
+    
+    // Switch back to receive mode
+    digitalWrite(SERIAL_COMMUNICATION_CONTROL_PIN, RS485_RX_PIN_VALUE);
+    
+    // Update the last send time
+    lastRS485SendTime = millis();
+  }
 }
 
 void sendArchitectureViaCAN() {
@@ -234,13 +331,31 @@ void receiveCANMessage() {
     Serial.print("Data Length: ");
     Serial.println(canMsg.can_dlc);
     
-    Serial.print("HEX: ");
+    Serial.print("Raw Data: ");
+    // First try to display as ASCII text if possible
+    bool isASCII = true;
     for (int i = 0; i < canMsg.can_dlc; i++) {
-      if (canMsg.data[i] < 0x10) Serial.print("0");
-      Serial.print(canMsg.data[i], HEX);
-      Serial.print(" ");
+      if (canMsg.data[i] < 32 || canMsg.data[i] > 126) {
+        isASCII = false;
+        break;
+      }
     }
-    Serial.println();
+    
+    if (isASCII) {
+      Serial.print("\"");
+      for (int i = 0; i < canMsg.can_dlc; i++) {
+        Serial.print((char)canMsg.data[i]);
+      }
+      Serial.println("\"");
+    } else {
+      // Fall back to HEX display
+      for (int i = 0; i < canMsg.can_dlc; i++) {
+        if (canMsg.data[i] < 0x10) Serial.print("0");
+        Serial.print(canMsg.data[i], HEX);
+        Serial.print(" ");
+      }
+      Serial.println();
+    }
     
     // Interpret messages based on CAN ID
     if (canMsg.can_id == 0x100) {
@@ -254,8 +369,16 @@ void receiveCANMessage() {
       Serial.println("Message Type: Architecture Info");
       Serial.print("Architecture: ");
       Serial.println(receivedArchName);
+      
+      // Check if it's a numeric architecture ID and convert to full name
+      if (receivedArchName.length() == 1 && receivedArchName[0] >= '0' && receivedArchName[0] <= '9') {
+        uint8_t archID = receivedArchName[0] - '0';
+        String fullArchName = getArchitectureName(archID);
+        Serial.print("Full Architecture Name: ");
+        Serial.println(fullArchName);
+      }
     }
-    else if (canMsg.can_id == 0x124 && canMsg.can_dlc == 8) {
+    else if (canMsg.can_id == 0x124 || canMsg.can_id == 0x125) {
       // Temperature and humidity message
       uint32_t tempBits = ((uint32_t)canMsg.data[0] << 24) |
                          ((uint32_t)canMsg.data[1] << 16) |
