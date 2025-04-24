@@ -141,7 +141,9 @@ void setup(){
  
 void loop(){
     delay(100);
-    float h = dht.readHumidity();
+    float temp = dht.readTemperature();
+    float humid = dht.readHumidity();
+    if (!isnan(temp) && !isnan(humid)) {
     display.clearDisplay();
     // Display Text
     display.setTextSize(1);
@@ -149,9 +151,9 @@ void loop(){
     display.setCursor(0, 0);
     display.println("#[Irrigation System]#");
     display.setCursor(0, 12);
-    display.println("Temperature :"+String(dht.readTemperature())+" *C");
+    display.println("Temperature :"+String(temp)+" *C");
     display.setCursor(0, 22);
-    display.println("Humidity : "+String(dht.readHumidity())+" %");
+    display.println("Humidity : "+String(humid)+" %");
     display.setCursor(0, 32);
     display.println("Hygrometer : "+String(100.0-((analogRead(HYGROMETER))/(4095.0)*100.0))+" %");
     if(float(dht.readHumidity())<58.0){
@@ -167,5 +169,6 @@ void loop(){
     display.println("Water Pump : OFF ");
     display.display();
     delay(500);
-    display.clearDisplay();  
+    display.clearDisplay();
+    }  
 }

@@ -19,9 +19,11 @@ bool ledState = false;
 DHT dht(DHTPIN, DHTTYPE);
 
 // RS485 setup
-#define RXPin        16  // Serial Receive pin
-#define TXPin        27  // Serial Transmit pin
- 
+#define RXPin        17  // Serial Receive pin
+#define TXPin        16  // Serial Transmit pin
+#define DISTANCE_PIN  27 
+#define RG_GREEN      21
+#define RG_RED        22
 // RS485 control
 #define SERIAL_COMMUNICATION_CONTROL_PIN 25 // Transmission set pin
 #define RS485_TX_PIN_VALUE HIGH
@@ -101,7 +103,9 @@ String getArchitectureName(uint8_t archID) {
 
 void setup() {
   Serial.begin(9600);
-  
+  // Initialize LED pins as outputs
+  pinMode(RG_GREEN, OUTPUT);
+  pinMode(RG_RED, OUTPUT);
   // Initialize DHT sensor
   dht.begin();
   
@@ -130,6 +134,7 @@ void setup() {
   // RS485Serial.begin(19200); // Try faster baud rate
   
   Serial.println("RS485 Ready");
+
 }
 
 void connectToWiFi() {
@@ -286,9 +291,16 @@ void sendCANMessage() {
   float humid = readDHTHumidity();
   
   if (!isnan(temp) && !isnan(humid)) {
+        if(humid > 58.0 || temp < 22.0){
+          digitalWrite(RG_GREEN, LOW);
+          digitalWrite(RG_RED, HIGH);
+        }if(humid < 58.0 || temp > 22.0){
+            digitalWrite(RG_GREEN, HIGH);
+            digitalWrite(RG_RED, LOW);
+        }
     canMsg.can_id = 0x125;
     canMsg.can_dlc = 8;
-    
+
     uint32_t tempBits;
     memcpy(&tempBits, &temp, sizeof(temp));
     uint32_t humidBits;
