@@ -591,7 +591,7 @@ void updateDummyData() {
     inputRegisters[1] = 2000 + counter % 100;            // Counter
     inputRegisters[2] = millis() / 1000;                 // Time in seconds
     
-    Serial.println("Updated dummy input data");
+    //Serial.println("Updated dummy input data");
   }
 }
 
