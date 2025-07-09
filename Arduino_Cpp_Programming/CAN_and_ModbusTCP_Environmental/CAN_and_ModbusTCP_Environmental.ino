@@ -8,6 +8,7 @@
 #include <mcp2515.h>
 #include "DHT.h"
 #include <WiFi.h>
+#include "../CAN_bus.h"  // Include extended CAN ID protocol definitions
 
 // Include our custom header files
 #include "can_functions.h"

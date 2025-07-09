@@ -10,6 +10,7 @@
 #include <SPI.h>
 #include <mcp2515.h>
 #include "DHT.h"
+#include "../CAN_bus.h"  // Include extended CAN ID protocol definitions
 
 // Architecture ID enum
 enum ArchitectureID {
@@ -117,10 +118,15 @@ void toggleLED() {
  * @brief Send architecture information via CAN with enhanced debugging
  */
 void sendArchitectureViaCAN() {
+  Serial.println("Sending architecture ID CAN message...");
+  
+  // Use extended CAN ID protocol for architecture ID message
+  canMsg.can_id = MAKE_EXTENDED_CAN_ID(PRIORITY_NORMAL_15, 0x02, EXT_DEST_BROADCAST, MSG_ARCHITECTURE_ID);
+  canMsg.can_dlc = 8;
+  
   uint8_t archID = getArchitectureID();
   String archName = getArchitectureName(archID);
   
-  Serial.println("Attempting to send architecture via CAN...");
   Serial.print("Architecture ID: ");
   Serial.print(archID);
   Serial.print(", Name: ");
@@ -132,14 +138,6 @@ void sendArchitectureViaCAN() {
     nameLength = 8; // CAN message can only hold 8 bytes
     Serial.println("Name truncated to 8 bytes");
   }
-  
-  canMsg.can_id = 0x100;  // Architecture message ID
-  canMsg.can_dlc = nameLength;
-  
-  Serial.print("CAN message prepared - ID: 0x");
-  Serial.print(canMsg.can_id, HEX);
-  Serial.print(", Length: ");
-  Serial.println(nameLength);
   
   // Copy each character of the architecture name to the CAN message
   for (int i = 0; i < nameLength; i++) {
@@ -193,7 +191,9 @@ void sendCANMessage() {
     Serial.print(humid);
     Serial.println("%");
     
-    canMsg.can_id = 0x125;
+    // Use extended CAN ID protocol for environmental data
+    // Temperature and humidity data with appropriate message type and priority
+    canMsg.can_id = MAKE_EXTENDED_CAN_ID(PRIORITY_SENSOR_DATA, 0x02, EXT_DEST_BROADCAST, MSG_ENV_HUMIDITY);
     canMsg.can_dlc = 8;
 
     uint32_t tempBits;
@@ -270,10 +270,28 @@ void receiveCANMessage() {
     Serial.print(millis() / 1000.0, 2);
     Serial.println("s]");
     
-    Serial.print("CAN ID: 0x");
-    Serial.println(canMsg.can_id, HEX);
+    Serial.print("Received CAN Message - ID: 0x");
+    Serial.print(canMsg.can_id, HEX);
     
-    Serial.print("Data Length: ");
+    // Additional debug info for extended CAN IDs
+    if (IS_EXTENDED_ID(canMsg.can_id)) {
+      uint8_t priority = GET_EXT_PRIORITY(canMsg.can_id);
+      uint8_t source = GET_EXT_SOURCE(canMsg.can_id);
+      uint8_t dest = GET_EXT_DEST(canMsg.can_id);
+      uint8_t msg_type = GET_EXT_MSG_TYPE(canMsg.can_id);
+      
+      Serial.print(" [Extended: Priority=");
+      Serial.print(priority);
+      Serial.print(", Source=0x");
+      Serial.print(source, HEX);
+      Serial.print(", Dest=0x");
+      Serial.print(dest, HEX);
+      Serial.print(", Type=0x");
+      Serial.print(msg_type, HEX);
+      Serial.print("]");
+    }
+    
+    Serial.print(" Data Length: ");
     Serial.println(canMsg.can_dlc);
     
     Serial.print("Raw Data: ");
@@ -303,14 +321,90 @@ void receiveCANMessage() {
     }
     
     // Interpret messages based on CAN ID
+    if (IS_EXTENDED_ID(canMsg.can_id)) {
+      // Handle extended CAN ID messages
+      uint8_t msg_type = GET_EXT_MSG_TYPE(canMsg.can_id);
+      uint8_t source = GET_EXT_SOURCE(canMsg.can_id);
+      uint8_t dest = GET_EXT_DEST(canMsg.can_id);
+      uint8_t priority = GET_EXT_PRIORITY(canMsg.can_id);
+      
+      Serial.println("\nExtended CAN ID Interpretation:");
+      Serial.print("Priority: ");
+      Serial.print(priority);
+      Serial.print(", Source: 0x");
+      Serial.print(source, HEX);
+      Serial.print(", Destination: 0x");
+      Serial.print(dest, HEX);
+      Serial.print(", Message Type: 0x");
+      Serial.println(msg_type, HEX);
+      
+      // Process based on message type
+      switch(msg_type) {
+        case MSG_ARCHITECTURE_ID:
+          // Architecture message - convert bytes back to string
+          {
+            String receivedArchName = "";
+            for (int i = 0; i < canMsg.can_dlc; i++) {
+              receivedArchName += (char)canMsg.data[i];
+            }
+            
+            Serial.println("Message Type: Architecture Info");
+            Serial.print("Architecture: ");
+            Serial.println(receivedArchName);
+            
+            // Check if it's a numeric architecture ID and convert to full name
+            if (receivedArchName.length() == 1 && receivedArchName[0] >= '0' && receivedArchName[0] <= '9') {
+              uint8_t archID = receivedArchName[0] - '0';
+              String fullArchName = getArchitectureName(archID);
+              Serial.print("Full Architecture Name: ");
+              Serial.println(fullArchName);
+            }
+          }
+          break;
+        
+        case MSG_ENV_HUMIDITY:
+        case MSG_TEMP_AMBIENT:
+          // Temperature and humidity message
+          {
+            uint32_t tempBits = ((uint32_t)canMsg.data[0] << 24) |
+                               ((uint32_t)canMsg.data[1] << 16) |
+                               ((uint32_t)canMsg.data[2] << 8) |
+                               canMsg.data[3];
+            uint32_t humidBits = ((uint32_t)canMsg.data[4] << 24) |
+                                ((uint32_t)canMsg.data[5] << 16) |
+                                ((uint32_t)canMsg.data[6] << 8) |
+                                canMsg.data[7];
+            
+            float receivedTemp, receivedHumid;
+            memcpy(&receivedTemp, &tempBits, sizeof(float));
+            memcpy(&receivedHumid, &humidBits, sizeof(float));
+            
+            Serial.println("Message Type: Environmental Sensor Data");
+            Serial.print("Temperature: ");
+            Serial.print(receivedTemp);
+            Serial.println("°C");
+            Serial.print("Humidity: ");
+            Serial.print(receivedHumid);
+            Serial.println("%");
+          }
+          break;
+          
+        default:
+          Serial.print("Unhandled extended message type: 0x");
+          Serial.println(msg_type, HEX);
+          break;
+      }
+    }
+    else {
+    // Handle legacy CAN ID messages for backward compatibility
     if (canMsg.can_id == 0x100) {
-      // Architecture message - convert bytes back to string
+      // Legacy architecture message
       String receivedArchName = "";
       for (int i = 0; i < canMsg.can_dlc; i++) {
         receivedArchName += (char)canMsg.data[i];
       }
       
-      Serial.println("\nData Interpretation:");
+      Serial.println("\nLegacy Data Interpretation:");
       Serial.println("Message Type: Architecture Info");
       Serial.print("Architecture: ");
       Serial.println(receivedArchName);
@@ -349,6 +443,7 @@ void receiveCANMessage() {
     }
     
     toggleLED();
+  }
   } else if (result != MCP2515::ERROR_NOMSG) {
     // Only log errors, not "no message" which is normal
     Serial.print("Error receiving CAN message. Error code: ");

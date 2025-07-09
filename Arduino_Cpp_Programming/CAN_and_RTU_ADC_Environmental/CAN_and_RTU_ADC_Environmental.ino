@@ -13,7 +13,26 @@
 // Include our custom header files
 #include "can_functions.h"
 #include "rtu_functions.h"
+#include "../CAN_bus.h"
 
+// Define CAN message types if CAN_bus.h is not accessible
+#ifndef MAKE_EXTENDED_CAN_ID
+#define MAKE_EXTENDED_CAN_ID(priority, src, dest, msg_type) \
+    (0x80000000UL | \
+     ((uint32_t)(priority & 0x1F) << 24) | \
+     ((uint32_t)(src & 0xFF) << 16) | \
+     ((uint32_t)(dest & 0xFF) << 8) | \
+     ((uint32_t)(msg_type & 0xFF)))
+
+#define PRIORITY_SENSOR_DATA    8
+#define PRIORITY_NORMAL_13      13
+#define EXT_DEST_BROADCAST      0xFF
+#define MSG_ARCHITECTURE_ID     0x01
+#define MSG_ENV_HUMIDITY        0x50
+#define MSG_ELECTRICAL_DC_VOLTAGE 0x80
+#define MSG_ELECTRICAL_DC_CURRENT 0x82
+#define MSG_ELECTRICAL_ACTIVE_POWER 0x84
+#endif
 // Define pins
 #define RXPin         17  // Serial Receive pin
 #define TXPin         16  // Serial Transmit pin
@@ -22,6 +41,12 @@
 #define DISTANCE_PIN  27
 #define RG_GREEN      21
 #define RG_RED        22
+
+// Define standard delay time
+#define STANDARD_DELAY 100 // 100ms standard delay
+
+// Define ESP32 node ID for CAN communication
+#define ESP32_NODE_ID 0x02
 
 // Define ADC pins for resistor measurements
 #define ANALOG_PIN1   34  // Junction between R1 and R2
@@ -93,7 +118,7 @@ void connectToWiFi() {
   
   int attempts = 0;
   while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-    delay(500);
+    delay(STANDARD_DELAY);
     Serial.print(".");
     attempts++;
   }
@@ -218,20 +243,41 @@ void updateResistorMeasurements() {
  * @brief Print system information
  */
 void printSystemInfo() {
-  Serial.println("Arduino System Info:");
-  Serial.print("Processor Frequency: ");
+  Serial.println("\n=== SYSTEM STATUS ======================");
+  Serial.println("Device Type    : ESP32 Environmental Monitor");
+  Serial.println("CAN Bus Status : Active (Extended IDs)");
+  Serial.println("ModBus Status  : Active");
+  Serial.println("DHT Sensor     : Active");
+  Serial.println("WiFi Status    : " + String(WiFi.status() == WL_CONNECTED ? "Connected" : "Disconnected"));
+  Serial.print("CAN Node ID    : 0x");
+  Serial.println(ESP32_NODE_ID, HEX);
+  Serial.print("Processor Freq : ");
   Serial.print(F_CPU / 1000000);
   Serial.println(" MHz");
   
-  Serial.print("WiFi Status: ");
-  Serial.println(WiFi.status() == WL_CONNECTED ? "Connected" : "Disconnected");
-  
-  Serial.print("Architecture: ");
-  Serial.println(getArchitectureName(getArchitectureID()));
-  
-  Serial.print("Uptime: ");
-  Serial.print(millis() / 1000);
-  Serial.println(" seconds\n");
+  Serial.println("\n=== RESISTOR MEASUREMENTS ============");
+  Serial.print("Voltage R1     : ");
+  Serial.print(voltage1, 3);
+  Serial.println(" V");
+  Serial.print("Voltage R2     : ");
+  Serial.print(voltage2, 3);
+  Serial.println(" V");
+  Serial.print("Voltage R3     : ");
+  Serial.print(voltage3, 3);
+  Serial.println(" V");
+  Serial.print("Current        : ");
+  Serial.print(current * 1000.0, 3);
+  Serial.println(" mA");
+  Serial.print("Power R1       : ");
+  Serial.print(power1 * 1000.0, 3);
+  Serial.println(" mW");
+  Serial.print("Power R2       : ");
+  Serial.print(power2 * 1000.0, 3);
+  Serial.println(" mW");
+  Serial.print("Power R3       : ");
+  Serial.print(power3 * 1000.0, 3);
+  Serial.println(" mW");
+  Serial.println("=====================================");
 }
 
 /**
@@ -253,8 +299,9 @@ void setup() {
   pinMode(RS485_CONTROL, OUTPUT);
   digitalWrite(RS485_CONTROL, RS485_RX_PIN_VALUE);  // Start in receive mode
   
-// Initialize RS485Serial
+// Initialize RS485Serial with proper settings for Modbus RTU
   RS485Serial.begin(9600);
+  delay(100); // Allow time for the serial port to initialize
   
   // Initialize DHT sensor
   dht.begin();
@@ -265,16 +312,20 @@ void setup() {
   // Connect to WiFi
   connectToWiFi();
   
-  // Initialize CAN bus
+  // Initialize CAN bus with extended frame support
   mcp2515.reset();
   mcp2515.setBitrate(CAN_500KBPS, MCP_8MHZ);
   mcp2515.setNormalMode();
+  Serial.println("CAN bus initialized with extended frame support");
   
   // Initialize dummy data
   initializeDummyData();
   
-  // Send architecture info via CAN on startup
+  // Send architecture info via CAN on startup using extended ID
+  canMsg.can_id = MAKE_EXTENDED_CAN_ID(PRIORITY_NORMAL_13, ESP32_NODE_ID, EXT_DEST_BROADCAST, MSG_ARCHITECTURE_ID);
   sendArchitectureViaCAN();
+  
+  Serial.println("Sending architecture info with extended CAN ID: 0x" + String(canMsg.can_id, HEX));
   
   Serial.println("Ready for Modbus RTU commands");
   Serial.println("Implemented functions:");
@@ -299,94 +350,92 @@ void setup() {
  * @brief Main loop
  */
 void loop() {
-  // Check for incoming Modbus data
-  if (RS485Serial.available()) {
-    // Wait to ensure complete message
-    delay(100);
-    
-    // Read the data
-    uint8_t buffer[256];
-    uint8_t byteCount = 0;
-    
-    while (RS485Serial.available() && byteCount < 256) {
-      buffer[byteCount++] = RS485Serial.read();
-    }
-    
-    // Debug print
-    if (byteCount > 0) {
-      Serial.print("Received frame (");
-      Serial.print(byteCount);
-      Serial.print(" bytes): ");
-      for (int i = 0; i < byteCount; i++) {
-        Serial.print(buffer[i], HEX);
-        Serial.print(" ");
-      }
-      Serial.println();
+  // Prioritize Modbus communication - check several times per loop
+  for(int i = 0; i < 5; i++) {
+    // Check for incoming Modbus data
+    if (RS485Serial.available()) {
+      // Wait a short time to ensure complete message
+      delay(20);
       
-      // Process the Modbus frame
-      processModbusFrame(buffer, byteCount);
+      // Read the data
+      uint8_t buffer[256];
+      uint8_t byteCount = 0;
+      
+      while (RS485Serial.available() && byteCount < 256) {
+        buffer[byteCount++] = RS485Serial.read();
+      }
+      
+      // Debug print
+      if (byteCount > 0) {
+        Serial.print("Received frame (");
+        Serial.print(byteCount);
+        Serial.print(" bytes): ");
+        for (int i = 0; i < byteCount; i++) {
+          Serial.print(buffer[i], HEX);
+          Serial.print(" ");
+        }
+        Serial.println();
+        
+        // Process the Modbus frame
+        processModbusFrame(buffer, byteCount);
+        // Give extra time for processing and response
+        delay(50);
+      }
     }
+    delay(10); // Short delay between Modbus checks
   }
   
-  // Read sensor data and update modbus registers
-  static unsigned long lastSensorUpdateTime = 0;
-  if (millis() - lastSensorUpdateTime > 2000) {
-    updateSensorData();
-    lastSensorUpdateTime = millis();
-  }
+  // Update sensor data and registers (happens once per main loop)
+  updateSensorData();
+  delay(50); // Short delay after updating sensors
   
-  // Read resistor measurements and update modbus registers
-  static unsigned long lastResistorUpdateTime = 0;
-  if (millis() - lastResistorUpdateTime > 1000) {
-    updateResistorMeasurements();
-    lastResistorUpdateTime = millis();
-  }
+  // Update resistor measurements and update modbus registers
+  updateResistorMeasurements();
+  delay(50); // Short delay after resistor measurements
   
   // Update dummy data
   updateDummyData();
   
-  // Send architecture via CAN periodically
-  static unsigned long lastArchSendTime = 0;
-  if (millis() - lastArchSendTime > 60000) {  // Reduced frequency to once per minute
+  // Send CAN messages - do this less frequently than Modbus checking
+  static int canCounter = 0;
+  canCounter++;
+  
+  if(canCounter % 5 == 0) { // Only send every 5th loop iteration
+    // Send architecture via CAN - architecture information
+    canMsg.can_id = MAKE_EXTENDED_CAN_ID(PRIORITY_NORMAL_13, ESP32_NODE_ID, EXT_DEST_BROADCAST, MSG_ARCHITECTURE_ID);
     sendArchitectureViaCAN();
-    lastArchSendTime = millis();
-  }
-  
-  // Send temperature and humidity via CAN periodically
-  static unsigned long lastCANSendTime = 0;
-  if (millis() - lastCANSendTime > 3000) {  // Reduced frequency to every 5 seconds
+    delay(20);
+    
+    // Configure extended CAN ID before sending temperature/humidity
+    canMsg.can_id = MAKE_EXTENDED_CAN_ID(PRIORITY_SENSOR_DATA, ESP32_NODE_ID, EXT_DEST_BROADCAST, MSG_ENV_HUMIDITY);
     sendCANMessage();
-    lastCANSendTime = millis();
-  }
-  
-  // Send resistor data via CAN
-  static unsigned long lastVoltageCANTime = 0;
-  static unsigned long lastCurrentCANTime = 0;
-  static unsigned long lastPowerCANTime = 0;
-  
-  // Send voltage data every 2 seconds
-  if (millis() - lastVoltageCANTime > 2000) {
+    delay(20);
+    
+    // Use appropriate message type for voltage measurements
+    canMsg.can_id = MAKE_EXTENDED_CAN_ID(PRIORITY_SENSOR_DATA, ESP32_NODE_ID, EXT_DEST_BROADCAST, MSG_ELECTRICAL_DC_VOLTAGE);
     sendVoltageViaCAN();
-    lastVoltageCANTime = millis();
-  }
-  
-  // Send current data every 2.5 seconds
-  if (millis() - lastCurrentCANTime > 2500) {
+    delay(20);
+    
+    // Use appropriate message type for current measurements
+    canMsg.can_id = MAKE_EXTENDED_CAN_ID(PRIORITY_SENSOR_DATA, ESP32_NODE_ID, EXT_DEST_BROADCAST, MSG_ELECTRICAL_DC_CURRENT);
     sendCurrentViaCAN();
-    lastCurrentCANTime = millis();
-  }
-  
-  // Send power data every 3 seconds
-  if (millis() - lastPowerCANTime > 3000) {
+    delay(20);
+    
+    // Use appropriate message type for power measurements
+    canMsg.can_id = MAKE_EXTENDED_CAN_ID(PRIORITY_SENSOR_DATA, ESP32_NODE_ID, EXT_DEST_BROADCAST, MSG_ELECTRICAL_ACTIVE_POWER);
     sendPowerViaCAN();
-    lastPowerCANTime = millis();
     
     // Print system info with power data
     printSystemInfo();
+    
+    // Reset counter if it gets too large
+    if(canCounter > 100) {
+      canCounter = 0;
+    }
   }
   
-  // Receive CAN messages
+  // Receive CAN messages (including extended frame formats)
   receiveCANMessage();
   
-  delay(10); // Short delay for stability
+  delay(50); // Short delay for stability
 }

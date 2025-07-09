@@ -459,7 +459,8 @@ void sendArchitectureViaCAN() {
     nameLength = 8; // CAN message can only hold 8 bytes
   }
   
-  canMsg.can_id = 0x100;  // Architecture message ID
+  // Note: canMsg.can_id should be set to the extended CAN ID before calling this function
+  // Using MAKE_EXTENDED_CAN_ID(PRIORITY_NORMAL_13, ESP32_NODE_ID, EXT_DEST_BROADCAST, MSG_ARCHITECTURE_ID)
   canMsg.can_dlc = nameLength;
   
   // Copy each character of the architecture name to the CAN message
@@ -470,6 +471,8 @@ void sendArchitectureViaCAN() {
   if (mcp2515.sendMessage(&canMsg) == MCP2515::ERROR_OK) {
     Serial.print("Sent CAN Message - Architecture: ");
     Serial.println(archName);
+    Serial.print("Extended CAN ID: 0x");
+    Serial.println(canMsg.can_id, HEX);
   } else {
     Serial.println("Error sending architecture message");
   }

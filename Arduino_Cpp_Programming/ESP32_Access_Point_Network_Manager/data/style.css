@@ -1,0 +1,209 @@
+:root {
+  --primary-color: #4361ee;
+  --secondary-color: #3a0ca3;
+  --background-color: #f8f9fa;
+  --card-color: #ffffff;
+  --text-color: #212529;
+  --success-color: #2ecc71;
+  --danger-color: #e74c3c;
+  --border-color: #dee2e6;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 480px;
+  width: 100%;
+}
+
+.card {
+  background-color: var(--card-color);
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 25px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+h1 {
+  color: var(--primary-color);
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.input-group {
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+input[type="text"], 
+input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+input[type="text"]:focus, 
+input[type="password"]:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.25);
+}
+
+button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: var(--secondary-color);
+}
+
+.network-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.network-item {
+  padding: 15px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.network-item:hover {
+  background-color: rgba(67, 97, 238, 0.05);
+}
+
+.network-item:last-child {
+  border-bottom: none;
+}
+
+.signal-strength {
+  display: inline-block;
+  margin-left: 10px;
+}
+
+.signal-bars {
+  display: inline-block;
+  width: 20px;
+}
+
+.logout-link {
+  color: var(--primary-color);
+  text-align: center;
+  display: block;
+  margin-top: 20px;
+  text-decoration: none;
+}
+
+.status-message {
+  padding: 12px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.error {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.refresh-button {
+  margin-bottom: 15px;
+}
+
+.connect-form {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 5px;
+}
+
+.wifi-info {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.wifi-info span {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border-bottom: 2px solid transparent;
+}
+
+.tab.active {
+  border-bottom: 2px solid var(--primary-color);
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.login-card {
+  max-width: 360px;
+  margin: 40px auto;
+}
+
+.device-type {
+  font-size: 12px;
+  color: #6c757d;
+  margin-left: 5px;
+}

@@ -78,7 +78,7 @@ uint16_t calculateCRC(uint8_t *buffer, int length) {
 void sendModbusResponse(uint8_t *responseBuffer, uint8_t responseLength) {
   // Set to transmit mode
   digitalWrite(RS485_CONTROL, RS485_TX_PIN_VALUE);
-  delay(20);  // Delay before transmission
+  delay(5);  // Short delay before transmission
   
   // Send response
   RS485Serial.write(responseBuffer, responseLength);
@@ -93,7 +93,7 @@ void sendModbusResponse(uint8_t *responseBuffer, uint8_t responseLength) {
   
   // Wait for transmission to complete
   RS485Serial.flush();
-  delay(100);  // Delay after transmission
+  delay(5);  // Short delay after transmission
   
   // Back to receive mode
   digitalWrite(RS485_CONTROL, RS485_RX_PIN_VALUE);

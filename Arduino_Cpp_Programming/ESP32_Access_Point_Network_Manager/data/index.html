@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 Network Manager</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div id="connection-status"></div>
+    
+    <div class="card">
+      <h1>WiFi Network Manager</h1>
+      
+      <button class="refresh-button" onclick="scanWiFi()">Refresh Networks</button>
+      <div id="wifi-networks"><div class="status-message">Loading networks...</div></div>
+    </div>
+    
+    <a href="/logout" class="logout-link">Logout</a>
+  </div>
+  
+  <script src="script.js"></script>
+</body>
+</html>
