@@ -15,21 +15,44 @@ interface NetworkScannerProps {
 export default function NetworkScanner({ onNetworkSelect }: NetworkScannerProps) {
   const [scanning, setScanning] = useState(false);
   const [networks, setNetworks] = useState<NetworkInfo[]>([]);
-
-  const mockNetworks: NetworkInfo[] = [
-    { ssid: 'HomeNetwork_5G', signal: -35, encryption: 'WPA2', channel: 6 },
-    { ssid: 'OfficeWiFi', signal: -45, encryption: 'WPA3', channel: 11 },
-    { ssid: 'GuestNetwork', signal: -60, encryption: 'WPA2', channel: 1 },
-    { ssid: 'SmartHome_IoT', signal: -55, encryption: 'WPA2', channel: 3 },
-    { ssid: 'Neighbor_WiFi', signal: -75, encryption: 'WPA2', channel: 9 },
-  ];
+  const [error, setError] = useState<string | null>(null);
 
   const scanNetworks = async () => {
     setScanning(true);
-    // Simulate network scanning
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setNetworks(mockNetworks);
-    setScanning(false);
+    setError(null);
+    try {
+      // Get the base URL (using window.location for local development or when deployed on ESP32)
+      const baseUrl = window.location.hostname === 'localhost' 
+        ? 'http://192.168.4.1' // Replace with your ESP32 IP when testing locally
+        : window.location.origin;
+      
+      const response = await fetch(`${baseUrl}/api/wifi/scan`);
+      
+      if (!response.ok) {
+        throw new Error(`Network scan failed: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Transform the data to match our NetworkInfo interface
+      const networksList: NetworkInfo[] = data.map(network => ({
+        ssid: network.ssid || 'Unknown',
+        // Map ESP32's rssi to our signal property
+        signal: network.rssi || -100,
+        encryption: network.encryption || 'unknown',
+        // Use a default channel if not provided by the ESP32
+        channel: network.channel || 1
+      }));
+      
+      setNetworks(networksList);
+      console.log('Networks found:', networksList.length);
+    } catch (err) {
+      console.error('Error scanning networks:', err);
+      setError('Failed to scan networks. Please try again.');
+      setNetworks([]);
+    } finally {
+      setScanning(false);
+    }
   };
 
   const getSignalStrength = (signal: number) => {
@@ -64,6 +87,12 @@ export default function NetworkScanner({ onNetworkSelect }: NetworkScannerProps)
         </button>
       </div>
 
+      {error && (
+        <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
+          {error}
+        </div>
+      )}
+      
       {networks.length > 0 && (
         <div className="max-h-48 overflow-y-auto space-y-2">
           {networks.map((network, index) => (

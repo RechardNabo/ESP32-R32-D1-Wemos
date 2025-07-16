@@ -142,8 +142,6 @@ function App() {
       case 'about':
         return <About />;
       default:
-        return <Dashboard systemStatus={systemStatus || mockSystemStatus} vehicleInfo={mockVehicleInfo} obdData={obdData} />;
-      default:
         return <Dashboard systemStatus={systemStatus || mockSystemStatus} vehicleInfo={mockVehicleInfo} obdData={obdData} isDarkMode={isDarkMode} />;
     }
   };

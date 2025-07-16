@@ -11,6 +11,7 @@
 #include <LittleFS.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
+#include <esp_wifi.h>
 #include <ArduinoJson.h>
 #include <EEPROM.h>  // For persistent storage
 #include <Update.h>  // For firmware updates
@@ -351,8 +352,20 @@ void setupWiFi() {
 void startAP() {
   Serial.println("Starting AP mode for configuration");
   
-  // Disconnect from any existing WiFi connection
-  WiFi.disconnect();
+  // Disconnect from any existing WiFi connection and wait for it to complete
+  WiFi.disconnect(true);
+  delay(500); // Add delay to ensure disconnect completes before starting AP
+  
+  // Completely reset WiFi settings
+  WiFi.mode(WIFI_OFF);
+  delay(100);
+  WiFi.mode(WIFI_AP);
+  
+  // Disable power-saving mode for more stable AP
+  esp_wifi_set_ps(WIFI_PS_NONE);
+  
+  // Set WiFi power to maximum for better range and stability
+  esp_wifi_set_max_tx_power(78); // 19.5dBm, maximum power
   
   // Read network settings from EEPROM to get hostname if available
   String hostname = "esp32-config";
@@ -367,8 +380,24 @@ void startAP() {
   // Set hostname for AP mode
   WiFi.setHostname(hostname.c_str());
   
-  // Configure AP - Channel 1, Open network (no hidden SSID), Max 4 connections
-  bool success = WiFi.softAP(ssid, password, 1, 0, 4);
+  // Configure AP with improved stability settings
+  // - Channel 6 (often has less interference)
+  // - Not hidden (0)
+  // - Max 4 connections
+  // - Long beacon interval (default is 100ms)
+  wifi_config_t ap_config;
+  memset(&ap_config, 0, sizeof(ap_config));
+  strcpy((char*)ap_config.ap.ssid, ssid);
+  strcpy((char*)ap_config.ap.password, password);
+  ap_config.ap.ssid_len = strlen(ssid);
+  ap_config.ap.channel = 6;
+  ap_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
+  ap_config.ap.ssid_hidden = 0;
+  ap_config.ap.max_connection = 4;
+  ap_config.ap.beacon_interval = 300; // Increase beacon interval for stability
+  
+  esp_wifi_set_config(WIFI_IF_AP, &ap_config);
+  bool success = WiFi.softAP(ssid, password);
   
   if (success) {
     // Default IP is 192.168.4.1
@@ -511,6 +540,7 @@ void setupServer() {
         // Add network details
         networkObj["ssid"] = WiFi.SSID(i);
         networkObj["rssi"] = WiFi.RSSI(i); // Signal strength
+        networkObj["channel"] = WiFi.channel(i); // Add WiFi channel
         
         // Determine encryption type
         String encType = "";
