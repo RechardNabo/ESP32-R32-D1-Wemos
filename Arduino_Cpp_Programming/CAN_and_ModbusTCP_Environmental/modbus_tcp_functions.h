@@ -609,9 +609,9 @@ void handleModbusTCP() {
 }
 
 /**
- * @brief Initialize dummy data for simulation
+ * @brief Initialize dummy data for simulation (TCP version)
  */
-void initializeDummyData() {
+void initializeDummyDataTCP() {
   // Initialize coils (all off except coil 0 controls the LED)
   for (int i = 0; i < COIL_COUNT; i++) {
     coils[i] = false;
@@ -636,9 +636,9 @@ void initializeDummyData() {
 }
 
 /**
- * @brief Update some dummy data periodically to simulate changing inputs
+ * @brief Update some dummy data periodically to simulate changing inputs (TCP version)
  */
-void updateDummyData() {
+void updateDummyDataTCP() {
   static unsigned long lastUpdate = 0;
   static int counter = 0;
   
